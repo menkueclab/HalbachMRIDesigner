@@ -34,7 +34,6 @@ class HalbachSlice:
         self.standWidth = standWidth
         self.numConnectionRods = numConnectionRods
         self.connectionRodDiameter = 0.005 # assume M5
-        self.shimTrayWidth = 0.014
         self.shimTrayHeight = 0.014
         self.shimTrayAngle = 25
         self.shimTrayRadius = self.outerRadius*1e3 - 10
@@ -42,7 +41,13 @@ class HalbachSlice:
         self.rings = []
     
     def addRing(self, ring, position):
+        ring.setPosition(position)
         self.rings.append(ring)
+
+    def setPosition(self, position):
+        self.position = position
+        for ring in self.rings:
+            ring.setPosition(position)
 
     def generateSCADObject(self):
         shimTray = arc(16,2000,self.shimTrayRadius,self.shimTrayAngle)
@@ -75,8 +80,10 @@ class HalbachSlice:
         shimTrays = []
         for n in np.arange(self.numConnectionRods):
             shimTrays.append(
-                rotate([0, 0, 360/self.numConnectionRods*n + self.shimTrayAngle/2])(
-                    shimTray
+                translate([0,0,-1000])(
+                    rotate([0, 0, 360/self.numConnectionRods*n + self.shimTrayAngle/2])(
+                        shimTray
+                    )
                 ))
         return disc - cubes - rods - shimTrays
 

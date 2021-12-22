@@ -17,6 +17,11 @@ class HalbachRing:
         for angle in magnetAngles:
             self.magnets.append(TMagnet.Magnet((radius*np.cos(angle), radius*np.sin(angle), self.position), angle*k))
 
+    def setPosition(self, position):
+        self.position = position
+        for magnet in self.magnets:
+            magnet.setZPosition(position)
+
     def calculateB(self, evalPoints):
         x, y, z = evalPoints
         B0 = np.zeros( (x.size, 3) )

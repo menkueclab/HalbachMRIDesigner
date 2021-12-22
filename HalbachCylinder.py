@@ -5,10 +5,13 @@ import HalbachSlice as HalbachSlice
 import matplotlib.pyplot as plt
 from solid import *
 from solid.utils import *
+import json as json
+import copy
 
 class HalbachCylinder:
     def __init__(self):
         self.slices = []
+        self.params = []
 
     def addSlice(self, slice):
         self.slices.append(slice)
@@ -49,19 +52,40 @@ class HalbachCylinder:
         numMagnets = []
         for n in np.arange(numRadii):
             numMagnets.append()
-        
-if __name__ == '__main__':
-    # same settings as in https://github.com/LUMC-LowFieldMRI/HalbachOptimisation/blob/master/homogeneityOptimisation.py
-    innerRingRadii = np.array([148, 151, 154, 156, 159, 162, 165, 168, 171, 174, 177, 180, 183, 186, 189, 192, 195, 198, 201])*1e-3
-    innerNumMagnets = np.array([50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67, 68])
-
-    index = 0
-    print('radius(numMagnets): ', end='')
-    for r in np.nditer(innerRingRadii.T):
-        print(str(r) + "(" + str(innerNumMagnets[index]) + ")", end=' ')
-        index = index + 1
-    print('')
     
+    def loadJSON(self, filename):
+        f = open(filename)
+        params = json.load(f)
+        self.params = params
+        mirrorSlices = params['mirrorSlices']
+        if 'standHeight' in params:
+            standHeight = float(params['standHeight'])/1e3
+        else:
+            standHeight = 0
+        if 'standWidth' in params:
+            standWidth = float(params['standWidth'])/1e3
+        else:
+            standWidth = 0
+        numConnectionRods = int(params['numConnectionRods'])
+        rings = []
+        for ring in params['rings']:
+            rings.append(HalbachRing.HalbachRing(0, float(ring['radius'])/1e3, ring['numMagnets'], CubeMagnet))
+        for slice in params['slices']:
+            halbachSlice = HalbachSlice.HalbachSlice(float(slice['position'])/1e3, float(slice['innerRadius'])/1e3, float(slice['outerRadius'])/1e3, standHeight, standWidth, numConnectionRods)
+            for ring in slice['rings']:
+                halbachSlice.addRing(copy.deepcopy(rings[ring['id']]), float(slice['position'])/1e3)
+            self.addSlice(halbachSlice)
+            if mirrorSlices and float(slice['position']) != 0:
+                halbachSlice = HalbachSlice.HalbachSlice(-float(slice['position'])/1e3, float(slice['innerRadius'])/1e3, float(slice['outerRadius'])/1e3, standHeight, standWidth, numConnectionRods)
+                for ring in slice['rings']:
+                    halbachSlice.addRing(copy.deepcopy(rings[ring['id']]), -float(slice['position'])/1e3)
+                self.addSlice(halbachSlice)
+        f.close()
+
+
+def generateExampleGeometry():
+    innerRingRadii = np.array([148, 151, 154, 156, 159, 162, 165, 168, 171, 174, 177, 180, 183, 186, 189, 192, 195, 198, 201])*1e-3
+    innerNumMagnets = np.array([50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67, 68])    
     outerRingRadii = innerRingRadii + 21*1e-3
     outerNumMagnets = innerNumMagnets + 7
     
@@ -70,18 +94,6 @@ if __name__ == '__main__':
     magnetLength = (numRings - 1) * ringSep
     ringPositions = np.linspace(-magnetLength/2, magnetLength/2, numRings)   
     ringPositionsPositiveOnly = ringPositions[ringPositions >= 0]    
-
-    resolution = 0.005
-    dsv = 0.2
-    simDimensions = (dsv, dsv, dsv)
-    x = np.linspace(-simDimensions[0]/2, simDimensions[0]/2, int(simDimensions[0]/resolution)+1, dtype=np.float32)
-    y = np.linspace(-simDimensions[1]/2, simDimensions[1]/2, int(simDimensions[1]/resolution)+1, dtype=np.float32)
-    z = np.linspace(-simDimensions[2]/2, simDimensions[2]/2, int(simDimensions[2]/resolution)+1, dtype=np.float32)
-    grid = np.meshgrid(x,y,z)
-    mask = np.zeros(np.shape(grid[0]))
-    mask[np.square(grid[0]) + np.square(grid[1]) + np.square(grid[2]) <= (dsv/2)**2] = 1   
-    evalPoints = [g[mask==1] for g in grid]
-
     maxOuterRadius = np.max(outerRingRadii)
     standHeight = maxOuterRadius + 0.05
     standWidth = maxOuterRadius*1.6
@@ -99,6 +111,25 @@ if __name__ == '__main__':
             halbachSlice.addRing(HalbachRing.HalbachRing(-position, innerRingRadii[sizeIndex], innerNumMagnets[sizeIndex], CubeMagnet), -position)
             halbachSlice.addRing(HalbachRing.HalbachRing(-position, outerRingRadii[sizeIndex], outerNumMagnets[sizeIndex], CubeMagnet), -position)
             halbachCylinder.addSlice(halbachSlice)
+    return halbachCylinder
+
+if __name__ == '__main__':
+    halbachCylinder = HalbachCylinder()
+    halbachCylinder.loadJSON('examples/mri1.json')
+
+    # alternative to json file
+    #halbachCylinder = generateExampleGeometry()
+
+    resolution = 0.005
+    dsv = 0.2
+    simDimensions = (dsv, dsv, dsv)
+    x = np.linspace(-simDimensions[0]/2, simDimensions[0]/2, int(simDimensions[0]/resolution)+1, dtype=np.float32)
+    y = np.linspace(-simDimensions[1]/2, simDimensions[1]/2, int(simDimensions[1]/resolution)+1, dtype=np.float32)
+    z = np.linspace(-simDimensions[2]/2, simDimensions[2]/2, int(simDimensions[2]/resolution)+1, dtype=np.float32)
+    grid = np.meshgrid(x,y,z)
+    mask = np.zeros(np.shape(grid[0]))
+    mask[np.square(grid[0]) + np.square(grid[1]) + np.square(grid[2]) <= (dsv/2)**2] = 1   
+    evalPoints = [g[mask==1] for g in grid]    
     B0 = halbachCylinder.calculateB(evalPoints)
 
     halbachCylinder.sliceAtPosition(0).generateSCADFile('slice.scad')

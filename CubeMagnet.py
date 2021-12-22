@@ -7,6 +7,9 @@ class Magnet:
         self.angle = angle
         self.dimension = 0.012
         self.B_rem = 1.3
+    
+    def setZPosition(self, position):
+        self.position = (self.position[0], self.position[1], position)
 
     def magneticMoment_withoutMu0(self):
         magneticMoment_abs = self.B_rem * self.dimension**3

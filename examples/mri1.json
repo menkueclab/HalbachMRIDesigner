@@ -1,0 +1,308 @@
+{
+    "_comment" : "geometry from \"O'Reilly et al., Three-dimensional MRI in a homogenous 27 cm diameter bore Halbach array magnet, JMR 2019\"",
+    "magnets":
+    [
+        {
+            "dimension" : "12",
+            "shape" : "cube" 
+        }
+    ],
+    "rings":
+    [
+        {
+            "id" : 0,
+            "radius" : 148,
+            "numMagnets" : 50
+        },
+        {
+            "id" : 1,
+            "radius" : 151,
+            "numMagnets" : 51
+        },
+        {
+            "id" : 2,
+            "radius" : 154,
+            "numMagnets" : 52
+        },
+        {
+            "id" : 3,
+            "radius" : 156,
+            "numMagnets" : 53
+        },
+        {
+            "id" : 4,
+            "radius" : 159,
+            "numMagnets" : 54
+        },
+        {
+            "id" : 5,
+            "radius" : 162,
+            "numMagnets" : 55
+        },
+        {
+            "id" : 6,
+            "radius" : 165,
+            "numMagnets" : 56
+        },
+        {
+            "id" : 7,
+            "radius" : 168,
+            "numMagnets" : 57
+        },
+        {
+            "id" : 8,
+            "radius" : 171,
+            "numMagnets" : 58
+        },
+        {
+            "id" : 9,
+            "radius" : 174,
+            "numMagnets" : 59
+        },
+        {
+            "id" : 10,
+            "radius" : 177,
+            "numMagnets" : 60
+        },
+        {
+            "id" : 11,
+            "radius" : 180,
+            "numMagnets" : 61
+        },
+        {
+            "id" : 12,
+            "radius" : 183,
+            "numMagnets" : 62
+        },
+        {
+            "id" : 13,
+            "radius" : 186,
+            "numMagnets" : 63
+        },
+        {
+            "id" : 14,
+            "radius" : 189,
+            "numMagnets" : 64
+        },
+        {
+            "id" : 15,
+            "radius" : 192,
+            "numMagnets" : 65
+        },
+        {
+            "id" : 16,
+            "radius" : 195,
+            "numMagnets" : 66
+        },
+        {
+            "id" : 17,
+            "radius" : 198,
+            "numMagnets" : 67
+        },
+        {
+            "id" : 18,
+            "radius" : 201,
+            "numMagnets" : 68
+        },
+        {
+            "id" : 19,
+            "radius" : 204,
+            "numMagnets" : 69
+        },
+        {
+            "id" : 20,
+            "radius" : 207,
+            "numMagnets" : 70
+        },
+        {
+            "id" : 21,
+            "radius" : 210,
+            "numMagnets" : 71
+        },
+        {
+            "id" : 22,
+            "radius" : 213,
+            "numMagnets" : 72
+        },
+        {
+            "id" : 23,
+            "radius" : 216,
+            "numMagnets" : 73
+        },
+        {
+            "id" : 24,
+            "radius" : 219,
+            "numMagnets" : 74
+        },
+        {
+            "id" : 25,
+            "radius" : 221,
+            "numMagnets" : 75
+        }             
+    ],
+    "mirrorSlices" : true,
+    "shimTrayHeight" : "14",
+    "shimTrayAngle" : "25",
+    "shimTrayRadius" : "25",
+    "standWidth" : "240",
+    "standHeight" : "280",
+    "numConnectionRods" : 12,
+    "radiusConnectionRod" : 5,
+    "slices":
+    [
+        {
+            "position" : "220",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 0
+                },
+                {
+                    "id" : 7
+                }
+            ]           
+        },
+        {
+            "position" : "198",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 0
+                },
+                {
+                    "id" : 7
+                }
+            ]            
+        },
+        {
+            "position" : "176",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 1
+                },
+                {
+                    "id" : 8
+                }
+            ]            
+        },
+        {
+            "position" : "154",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 12
+                },
+                {
+                    "id" : 19
+                }
+            ]            
+        },
+        {
+            "position" : "132",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 9
+                },
+                {
+                    "id" : 16
+                }
+            ]            
+        },
+        {
+            "position" : "110",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 18
+                },
+                {
+                    "id" : 25
+                }
+            ]            
+        },
+        {
+            "position" : "88",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 13
+                },
+                {
+                    "id" : 20
+                }
+            ]            
+        },
+        {
+            "position" : "66",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 13
+                },
+                {
+                    "id" : 20
+                }
+            ]            
+        },        
+        {
+            "position" : "44",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 16
+                },
+                {
+                    "id" : 23
+                }
+            ]            
+        },
+        {
+            "position" : "22",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 16
+                },
+                {
+                    "id" : 23
+                }
+            ]            
+        },   
+        {
+            "position" : "0",
+            "innerRadius" : "128",
+            "outerRadius" : "261",
+            "rings" :
+            [
+                {
+                    "id" : 17
+                },
+                {
+                    "id" : 25
+                }
+            ]            
+        }                       
+    ]
+}
