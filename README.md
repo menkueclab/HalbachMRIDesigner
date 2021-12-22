@@ -3,7 +3,7 @@ This tool creates an OpenSCAD geometry of a halbach cylinder which generates a h
 
 # Running the script
 - install python packages: numpy, matplotlib
-- clone https://github.com/catkira/SolidPython
+- clone https://github.com/catkira/SolidPython (this version has a patch, the original does not support the 'render()' command)
 - do pip install -e path-to-SolidPython-repo
 - run HalbachCylinder.py with python 3.8 or higher
 - the generated .scad file should look like examples/cylinder.scad
