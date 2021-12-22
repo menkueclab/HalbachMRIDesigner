@@ -6,6 +6,10 @@ This tool creates an OpenSCAD geometry of a halbach cylinder which generates a h
 - clone https://github.com/catkira/SolidPython
 - do pip install -e path-to-SolidPython-repo
 - run HalbachCylinder.py with python 3.8 or higher
+- the generated .scad file should look like examples/cylinder.scad
+- in OpenSCAD it should look like this
+
+![OpenSCAD screenshot](https://github.com/menkueclab/HalbachMRIDesigner/blob/master/examples/cylinder.png?raw=true)
 
 # Converting OpenSCAD files to FreeCAD
 - install OpenSCAD (https://openscad.org/)
