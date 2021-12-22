@@ -59,24 +59,36 @@ class HalbachCylinder:
         self.params = params
         mirrorSlices = params['mirrorSlices']
         if 'standHeight' in params:
-            standHeight = float(params['standHeight'])/1e3
+            standHeightGlobal = float(params['standHeight'])/1e3
         else:
-            standHeight = 0
+            standHeightGlobal = 0
         if 'standWidth' in params:
-            standWidth = float(params['standWidth'])/1e3
+            standWidthGlobal = float(params['standWidth'])/1e3
         else:
-            standWidth = 0
+            standWidthGlobal = 0
         numConnectionRods = int(params['numConnectionRods'])
+        connectionRodsDiameter = float(params['connectionRodsDiameter'])/1e3
+        connectionRodsArcRadius = float(params['connectionRodsArcRadius'])/1e3
         rings = []
         for ring in params['rings']:
             rings.append(HalbachRing.HalbachRing(0, float(ring['radius'])/1e3, ring['numMagnets'], CubeMagnet))
         for slice in params['slices']:
-            halbachSlice = HalbachSlice.HalbachSlice(float(slice['position'])/1e3, float(slice['innerRadius'])/1e3, float(slice['outerRadius'])/1e3, standHeight, standWidth, numConnectionRods)
+            if 'standHeight' in slice:
+                standHeight = float(slice['standHeight'])/1e3
+            else:
+                standHeight = standHeightGlobal
+            if 'standWidth' in slice:
+                standWidth = float(slice['standWidth'])/1e3
+            else:
+                standWidth = standWidthGlobal
+            halbachSlice = HalbachSlice.HalbachSlice(float(slice['position'])/1e3, float(slice['innerRadius'])/1e3, float(slice['outerRadius'])/1e3, 
+                numConnectionRods, connectionRodsArcRadius, connectionRodsDiameter, standHeight, standWidth)
             for ring in slice['rings']:
                 halbachSlice.addRing(copy.deepcopy(rings[ring['id']]), float(slice['position'])/1e3)
             self.addSlice(halbachSlice)
             if mirrorSlices and float(slice['position']) != 0:
-                halbachSlice = HalbachSlice.HalbachSlice(-float(slice['position'])/1e3, float(slice['innerRadius'])/1e3, float(slice['outerRadius'])/1e3, standHeight, standWidth, numConnectionRods)
+                halbachSlice = HalbachSlice.HalbachSlice(-float(slice['position'])/1e3, float(slice['innerRadius'])/1e3, float(slice['outerRadius'])/1e3, 
+                    numConnectionRods, connectionRodsArcRadius, connectionRodsDiameter, standHeight, standWidth)
                 for ring in slice['rings']:
                     halbachSlice.addRing(copy.deepcopy(rings[ring['id']]), -float(slice['position'])/1e3)
                 self.addSlice(halbachSlice)
@@ -102,12 +114,12 @@ def generateExampleGeometry():
         sizeIndex = innerRingRadii.size - positionIndex
         if sizeIndex >= innerRingRadii.size:
             sizeIndex = innerRingRadii.size-1
-        halbachSlice = HalbachSlice.HalbachSlice(position, innerRingRadii[sizeIndex]-0.020, maxOuterRadius+0.040, standHeight, standWidth)
+        halbachSlice = HalbachSlice.HalbachSlice(position, innerRingRadii[sizeIndex]-0.020, maxOuterRadius+0.040, 12, maxOuterRadius + 0.025, 0.005, standHeight, standWidth)
         halbachSlice.addRing(HalbachRing.HalbachRing(position, innerRingRadii[sizeIndex], innerNumMagnets[sizeIndex], CubeMagnet), position)
         halbachSlice.addRing(HalbachRing.HalbachRing(position, outerRingRadii[sizeIndex], outerNumMagnets[sizeIndex], CubeMagnet), position)
         halbachCylinder.addSlice(halbachSlice)
         if positionIndex != 0:
-            halbachSlice = HalbachSlice.HalbachSlice(-position, innerRingRadii[sizeIndex]-0.020, maxOuterRadius+0.040, standHeight, standWidth)
+            halbachSlice = HalbachSlice.HalbachSlice(-position, innerRingRadii[sizeIndex]-0.020, maxOuterRadius+0.040, 12, maxOuterRadius + 0.025, 0.005, standHeight, standWidth)
             halbachSlice.addRing(HalbachRing.HalbachRing(-position, innerRingRadii[sizeIndex], innerNumMagnets[sizeIndex], CubeMagnet), -position)
             halbachSlice.addRing(HalbachRing.HalbachRing(-position, outerRingRadii[sizeIndex], outerNumMagnets[sizeIndex], CubeMagnet), -position)
             halbachCylinder.addSlice(halbachSlice)
@@ -118,7 +130,7 @@ if __name__ == '__main__':
     halbachCylinder.loadJSON('examples/mri1.json')
 
     # alternative to json file
-    #halbachCylinder = generateExampleGeometry()
+    # halbachCylinder = generateExampleGeometry()
 
     resolution = 0.005
     dsv = 0.2

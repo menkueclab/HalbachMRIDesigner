@@ -147,7 +147,8 @@
     "standWidth" : "240",
     "standHeight" : "280",
     "numConnectionRods" : 12,
-    "radiusConnectionRod" : 5,
+    "connectionRodsArcRadius" : 246,
+    "connectionRodsDiameter" : 5,
     "slices":
     [
         {
@@ -168,6 +169,8 @@
             "position" : "198",
             "innerRadius" : "128",
             "outerRadius" : "261",
+            "standWidth" : "0",
+            "standHeight" : "0",        
             "rings" :
             [
                 {
@@ -182,6 +185,8 @@
             "position" : "176",
             "innerRadius" : "128",
             "outerRadius" : "261",
+            "standWidth" : "0",
+            "standHeight" : "0",  
             "rings" :
             [
                 {
@@ -196,6 +201,8 @@
             "position" : "154",
             "innerRadius" : "128",
             "outerRadius" : "261",
+            "standWidth" : "0",
+            "standHeight" : "0",  
             "rings" :
             [
                 {
@@ -210,6 +217,8 @@
             "position" : "132",
             "innerRadius" : "128",
             "outerRadius" : "261",
+            "standWidth" : "0",
+            "standHeight" : "0",  
             "rings" :
             [
                 {
@@ -224,6 +233,8 @@
             "position" : "110",
             "innerRadius" : "128",
             "outerRadius" : "261",
+            "standWidth" : "0",
+            "standHeight" : "0",  
             "rings" :
             [
                 {
@@ -238,6 +249,8 @@
             "position" : "88",
             "innerRadius" : "128",
             "outerRadius" : "261",
+            "standWidth" : "0",
+            "standHeight" : "0",  
             "rings" :
             [
                 {
@@ -252,6 +265,8 @@
             "position" : "66",
             "innerRadius" : "128",
             "outerRadius" : "261",
+            "standWidth" : "0",
+            "standHeight" : "0",  
             "rings" :
             [
                 {
@@ -266,6 +281,8 @@
             "position" : "44",
             "innerRadius" : "128",
             "outerRadius" : "261",
+            "standWidth" : "0",
+            "standHeight" : "0",  
             "rings" :
             [
                 {
@@ -280,6 +297,8 @@
             "position" : "22",
             "innerRadius" : "128",
             "outerRadius" : "261",
+            "standWidth" : "0",
+            "standHeight" : "0",  
             "rings" :
             [
                 {

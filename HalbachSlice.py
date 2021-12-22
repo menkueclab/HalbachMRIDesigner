@@ -26,18 +26,18 @@ def arc( height, depth, radius, degrees ):
     return arc
 
 class HalbachSlice:
-    def __init__(self, position, innerRadius, outerRadius, standHeight = 0, standWidth = 0, numConnectionRods = 12):
+    def __init__(self, position, innerRadius, outerRadius, numConnectionRods, connectionRodsArcRadius, connectionRodsDiameter, standHeight = 0, standWidth = 0):
         self.position = position
         self.innerRadius = innerRadius
         self.outerRadius = outerRadius
         self.standHeight = standHeight
         self.standWidth = standWidth
         self.numConnectionRods = numConnectionRods
-        self.connectionRodDiameter = 0.005 # assume M5
+        self.connectionRodDiameter = connectionRodsDiameter
         self.shimTrayHeight = 0.014
         self.shimTrayAngle = 25
         self.shimTrayRadius = self.outerRadius*1e3 - 10
-        self.rodRadius = self.outerRadius*1e3 - 15
+        self.rodRadius = connectionRodsArcRadius*1e3
         self.rings = []
     
     def addRing(self, ring, position):
