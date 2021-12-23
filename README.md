@@ -7,7 +7,7 @@ To frabricate the individual slices by milling or 3d printing, you can import th
 - install python packages: numpy, matplotlib
 - clone https://github.com/catkira/SolidPython (this version has a patch, the original does not support the 'render()' command)
 - do pip install -e path-to-SolidPython-repo
-- run HalbachCylinder.py with python 3.8 or higher
+- run 'python HalbachCylinder.py examples/mri1.conf --contour --quiver' with python 3.8 or higher
 - the generated .scad file should look like examples/cylinder.scad
 - in OpenSCAD it should look like this
 
