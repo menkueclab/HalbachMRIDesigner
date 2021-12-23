@@ -15,19 +15,18 @@ class HalbachRing:
         self.magnets = []
         k = 2
         for angle in magnetAngles:
-            self.magnets.append(TMagnet.Magnet((radius*np.cos(angle), radius*np.sin(angle), self.position), angle*k))
+            self.magnets.append(TMagnet.Magnet((radius*np.cos(angle), radius*np.sin(angle), 0), angle*k))
 
     def setPosition(self, position):
         self.position = position
-        for magnet in self.magnets:
-            magnet.setZPosition(position)
 
     def calculateB(self, evalPoints):
         x, y, z = evalPoints
         B0 = np.zeros( (x.size, 3) )
         for magnet in self.magnets:
+            magnetAbsoluteZPosition = magnet.position[2] + self.position
             magneticMoment_2 = np.multiply(1/(4*np.pi), magnet.magneticMoment_withoutMu0())
-            r = [(x+magnet.position[0]), (y+magnet.position[1]), (z+magnet.position[2])]
+            r = [(x+magnet.position[0]), (y+magnet.position[1]), (z+magnetAbsoluteZPosition)]
             r_dot_magneticMoment_2 = 3*((r[0])*magneticMoment_2[0] + (r[1])*magneticMoment_2[1])
             # magnetic moment has no z-component
             r_abs_p2 = np.square(r[0]) + np.square(r[1]) + np.square(r[2])
