@@ -1,5 +1,6 @@
 # HalbachMRIDesigner
 This tool creates an OpenSCAD geometry of a halbach cylinder which generates a homogeneous magnetic field inside. The design is fully parameterized so that it can easily be adapted. The parameters of the magnet are encapsulated in a json file. An example can be found in examples/mri1.json.
+To frabricate the individual slices by milling or 3d printing, you can import the OpenSCAD model into FreeCAD and then export a separate file for every slice.
 
 # Running the script
 - install python packages: numpy, matplotlib
