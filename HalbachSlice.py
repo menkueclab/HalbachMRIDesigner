@@ -39,6 +39,13 @@ class HalbachSlice:
         self.shimTrayRadius = self.outerRadius*1e3 - 10
         self.rodRadius = connectionRodsArcRadius*1e3
         self.rings = []
+        self.id = 0
+
+    def setParams(self, params):
+        self.params = params
+
+    def setId(self, id):
+        self.id = id
     
     def addRing(self, ring, position):
         ring.setPosition(position)
@@ -85,7 +92,15 @@ class HalbachSlice:
                         shimTray
                     )
                 ))
-        return disc - cubes - rods - shimTrays
+        addSCAD = []
+        if ('addSCAD' in self.params['slices'][self.id]):
+            addSCAD.append(
+                translate([0,0,self.position*1e3])(code(self.params['slices'][self.id]['addSCAD'])))
+        subSCAD = []
+        if ('subSCAD' in self.params['slices'][self.id]):
+            addSCAD.append(
+                translate([0,0,self.position*1e3])(code(self.params['slices'][self.id]['subSCAD'])))
+        return disc - cubes - rods - shimTrays + addSCAD - subSCAD
 
     def generateSCADFile(self, filename):
         scad_render_to_file(self.generateSCADObject(), filename)

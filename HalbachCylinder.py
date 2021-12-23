@@ -72,7 +72,7 @@ class HalbachCylinder:
         rings = []
         for ring in params['rings']:
             rings.append(HalbachRing.HalbachRing(0, float(ring['radius'])/1e3, ring['numMagnets'], CubeMagnet))
-        for slice in params['slices']:
+        for index, slice in enumerate(params['slices']):
             if 'standHeight' in slice:
                 standHeight = float(slice['standHeight'])/1e3
             else:
@@ -85,12 +85,16 @@ class HalbachCylinder:
                 numConnectionRods, connectionRodsArcRadius, connectionRodsDiameter, standHeight, standWidth)
             for ring in slice['rings']:
                 halbachSlice.addRing(copy.deepcopy(rings[ring['id']]), float(slice['position'])/1e3)
+            halbachSlice.setParams(params)
+            halbachSlice.setId(index)
             self.addSlice(halbachSlice)
             if mirrorSlices and float(slice['position']) != 0:
                 halbachSlice = HalbachSlice.HalbachSlice(-float(slice['position'])/1e3, float(slice['innerRadius'])/1e3, float(slice['outerRadius'])/1e3, 
                     numConnectionRods, connectionRodsArcRadius, connectionRodsDiameter, standHeight, standWidth)
                 for ring in slice['rings']:
                     halbachSlice.addRing(copy.deepcopy(rings[ring['id']]), -float(slice['position'])/1e3)
+                halbachSlice.setParams(params)
+                halbachSlice.setId(index)
                 self.addSlice(halbachSlice)
         f.close()
 

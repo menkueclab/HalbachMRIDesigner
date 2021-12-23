@@ -163,7 +163,8 @@
                 {
                     "id" : 7
                 }
-            ]           
+            ],
+            "addSCAD" : "translate(v=[120,0,0]){cube([20,40,12], center=true){}}translate(v=[-120,0,0]){cube([20,40,12], center=true){}}rotate(a=90){translate(v=[120,0,0]){cube([20,40,12], center=true){}}translate(v=[-120,0,0]){cube([20,40,12], center=true){}}}"           
         },
         {
             "position" : "198",
