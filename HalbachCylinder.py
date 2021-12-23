@@ -7,6 +7,7 @@ from solid import *
 from solid.utils import *
 import json as json
 import copy
+import argparse
 
 class HalbachCylinder:
     def __init__(self):
@@ -97,8 +98,6 @@ class HalbachCylinder:
                 halbachSlice.setId(index)
                 self.addSlice(halbachSlice)
         f.close()
-
-
 def generateExampleGeometry():
     innerRingRadii = np.array([148, 151, 154, 156, 159, 162, 165, 168, 171, 174, 177, 180, 183, 186, 189, 192, 195, 198, 201])*1e-3
     innerNumMagnets = np.array([50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67, 68])    
@@ -130,8 +129,20 @@ def generateExampleGeometry():
     return halbachCylinder
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Create Halbach-MRI geometry')   
+    parser.add_argument('filename', nargs='+', help='a .json file that describes the geometry')
+    parser.add_argument('--contour', action='store_true', help='creates a contour plot at z=0')
+    parser.add_argument('--quiver', action='store_true', help='creates a quiver plot at z=0')
+    parser.add_argument('-o', nargs='?', default='out.scad', help='name of output scad file')
+    args = parser.parse_args()     
     halbachCylinder = HalbachCylinder()
-    halbachCylinder.loadJSON('examples/mri1.json')
+
+    print("loading file...")
+    halbachCylinder.loadJSON(args.filename[0])
+    print(args.filename[0] + " loaded")
+
+    print("writing " + args.o)
+    halbachCylinder.generateSCADFile(args.o)
 
     # alternative to json file
     # halbachCylinder = generateExampleGeometry()
@@ -147,24 +158,23 @@ if __name__ == '__main__':
     mask[np.square(grid[0]) + np.square(grid[1]) + np.square(grid[2]) <= (dsv/2)**2] = 1   
     evalPoints = [g[mask==1] for g in grid]    
     B0 = halbachCylinder.calculateB(evalPoints)
-
-    halbachCylinder.sliceAtPosition(0).generateSCADFile('slice.scad')
-    halbachCylinder.generateSCADFile('cylinder.scad')
-
     print("Max B0 amplitude is " + str(np.amax(B0)) + " T")
-    fig = plt.figure(figsize=(16,12))
     B0z0 = B0[evalPoints[2]==0,:]
     B_abs = np.linalg.norm(B0z0[:,0:1], axis=1)
     print("Homogeneity: " + str(((np.max(B_abs)-np.min(B_abs))/np.mean(B_abs))*1e6) + " ppm")
     evalPointsz0=(evalPoints[0][evalPoints[2]==0], evalPoints[1][evalPoints[2]==0], evalPoints[2][evalPoints[2]==0])
-    qq = plt.quiver(evalPointsz0[0], evalPointsz0[1], B0z0[:,0], B0z0[:,1], B_abs, cmap=plt.cm.jet)
-    plt.colorbar(qq)
-    rings = halbachCylinder.ringsAtPosition(0)
-    for ring in rings:
-        ring.plotMagnets()
-    plt.show(block=False)
-    fig2 = plt.figure(figsize=(16,12))
-    qq = plt.tricontour(evalPointsz0[0], evalPointsz0[1], B_abs, cmap=plt.cm.jet)
-    plt.colorbar(qq)
+
+    if args.quiver:
+        fig = plt.figure(figsize=(16,12))
+        qq = plt.quiver(evalPointsz0[0], evalPointsz0[1], B0z0[:,0], B0z0[:,1], B_abs, cmap=plt.cm.jet)
+        plt.colorbar(qq)
+        rings = halbachCylinder.ringsAtPosition(0)
+        for ring in rings:
+            ring.plotMagnets()
+        plt.show(block=False)
+    if args.contour:
+        fig2 = plt.figure(figsize=(16,12))
+        qq = plt.tricontour(evalPointsz0[0], evalPointsz0[1], B_abs, cmap=plt.cm.jet)
+        plt.colorbar(qq)
     plt.show()    
     

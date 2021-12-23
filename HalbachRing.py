@@ -45,8 +45,10 @@ class HalbachRing:
         #plt.gca().add_patch(circle)
 
 
-
 if __name__ == '__main__':
+    '''
+    testcode
+    '''
     resolution = 0.005
     dsv = 0.2
     simDimensions = (dsv, dsv, dsv)
