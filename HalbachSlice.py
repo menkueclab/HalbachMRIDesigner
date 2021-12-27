@@ -103,4 +103,4 @@ class HalbachSlice:
         return disc - cubes - rods - shimTrays + addSCAD - subSCAD
 
     def generateSCADFile(self, filename):
-        scad_render_to_file(self.generateSCADObject(), filename)
+        scad_render_to_file(self.generateSCADObject(), filename, include_orig_code=False)

@@ -8,11 +8,14 @@ from solid.utils import *
 import json as json
 import copy
 import argparse
+import gmsh
 
 class HalbachCylinder:
     def __init__(self):
         self.slices = []
         self.params = []
+        gmsh.initialize()
+
 
     def addSlice(self, slice):
         self.slices.append(slice)

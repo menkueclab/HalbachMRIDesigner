@@ -1,6 +1,7 @@
 import numpy as np
 import CubeMagnet as CubeMagnet
 import matplotlib.pyplot as plt
+import gmsh
 
 # all units are SI units
 # TODO: make magnet type a template paramter
@@ -44,11 +45,26 @@ class HalbachRing:
         #circle=plt.Circle((magnet.position[0],magnet.position[1]),0.001,color='green')
         #plt.gca().add_patch(circle)
 
+    def generateGeometry(self):
+        gmsh.model.add("ring")
+        channel = gmsh.model.occ.addBox(-250, -250, -250, 500, 500, 500)     
+        magnetTags = []   
+        EPSILON = 1
+        for index, magnet in enumerate(self.magnets):
+            boxPos = np.array(magnet.position)*1e3 + magnet.dimension*1e3/2
+            magnetTag = gmsh.model.occ.addBox(boxPos[0], boxPos[1], boxPos[2], magnet.dimension*1e3, magnet.dimension*1e3, magnet.dimension*1e3)
+            gmsh.model.occ.synchronize()            
+            boxPosEnd = boxPos + magnet.dimension*1e3
+            entities = gmsh.model.occ.getEntitiesInBoundingBox(boxPos[0]-EPSILON, boxPos[1]-EPSILON, boxPos[2]-EPSILON, boxPosEnd[0]+EPSILON, boxPosEnd[1]+EPSILON, boxPosEnd[2]+EPSILON, dim=2)
+            gmsh.model.addPhysicalGroup(2, [x[1] for x in entities], magnetTag)
+            gmsh.model.setPhysicalName(2, magnetTag, "Magnet_" + str(magnetTag))
+
 
 if __name__ == '__main__':
     '''
     testcode
     '''
+    gmsh.initialize()
     resolution = 0.005
     dsv = 0.2
     simDimensions = (dsv, dsv, dsv)
@@ -66,18 +82,26 @@ if __name__ == '__main__':
     B0 += testRing2.calculateB(evalPoints)
     
     print("Max B0 amplitude is " + str(np.amax(B0)) + " T")
-    fig = plt.figure(figsize=(16,12))
     B0z0 = B0[evalPoints[2]==0,:]
     B_abs = np.linalg.norm(B0z0[:,0:1], axis=1)
     print("Homogeneity: " + str(((np.max(B_abs)-np.min(B_abs))/np.mean(B_abs))*1e6) + " ppm")
-    evalPointsz0=(evalPoints[0][evalPoints[2]==0], evalPoints[1][evalPoints[2]==0], evalPoints[2][evalPoints[2]==0])
-    qq = plt.quiver(evalPointsz0[0], evalPointsz0[1], B0z0[:,0], B0z0[:,1], B_abs, cmap=plt.cm.jet)
-    plt.colorbar(qq)
-    rings = [testRing1, testRing2]
-    for ring in rings:
-        ring.plotMagnets()
-    plt.show(block=False)
-    fig2 = plt.figure(figsize=(16,12))
-    qq = plt.tricontour(evalPointsz0[0], evalPointsz0[1], B_abs, cmap=plt.cm.jet)
-    plt.colorbar(qq)
-    plt.show()    
+    if False:
+        fig = plt.figure(figsize=(16,12))
+        evalPointsz0=(evalPoints[0][evalPoints[2]==0], evalPoints[1][evalPoints[2]==0], evalPoints[2][evalPoints[2]==0])
+        qq = plt.quiver(evalPointsz0[0], evalPointsz0[1], B0z0[:,0], B0z0[:,1], B_abs, cmap=plt.cm.jet)
+        plt.colorbar(qq)
+        rings = [testRing1, testRing2]
+        for ring in rings:
+            ring.plotMagnets()
+        plt.show(block=False)
+        fig2 = plt.figure(figsize=(16,12))
+        qq = plt.tricontour(evalPointsz0[0], evalPointsz0[1], B_abs, cmap=plt.cm.jet)
+        plt.colorbar(qq)
+        plt.show()    
+    if True:
+        testRing1.generateGeometry()
+        gmsh.model.occ.synchronize()
+        gmsh.model.mesh.generate(3)        
+        gmsh.write("ring.geo_unrolled")
+        #gmsh.write("ring.msh")
+
