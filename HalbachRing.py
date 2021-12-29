@@ -2,6 +2,8 @@ import numpy as np
 import CubeMagnet as CubeMagnet
 import matplotlib.pyplot as plt
 import gmsh
+import math
+import pygetdp
 
 # all units are SI units
 # TODO: make magnet type a template paramter
@@ -45,19 +47,31 @@ class HalbachRing:
         #circle=plt.Circle((magnet.position[0],magnet.position[1]),0.001,color='green')
         #plt.gca().add_patch(circle)
 
-    def generateGeometry(self):
-        gmsh.model.add("ring")
-        channel = gmsh.model.occ.addBox(-250, -250, -250, 500, 500, 500)     
+    def generateGeometry(self):        
         magnetTags = []   
         EPSILON = 1
+        meshResolution = 6
+        magnetData = "DefineConstant[\n"
+        magnetData += "NumMagnets = " + str(len(self.magnets)) + "\n"
         for index, magnet in enumerate(self.magnets):
             boxPos = np.array(magnet.position)*1e3 + magnet.dimension*1e3/2
             magnetTag = gmsh.model.occ.addBox(boxPos[0], boxPos[1], boxPos[2], magnet.dimension*1e3, magnet.dimension*1e3, magnet.dimension*1e3)
+            magnetTags.append(magnetTag)
+            gmsh.model.occ.rotate([[3, magnetTag]], magnet.position[0]*1e3, magnet.position[1]*1e3, magnet.position[2]*1e3, 0, 0, 1, magnet.angle)
             gmsh.model.occ.synchronize()            
-            boxPosEnd = boxPos + magnet.dimension*1e3
-            entities = gmsh.model.occ.getEntitiesInBoundingBox(boxPos[0]-EPSILON, boxPos[1]-EPSILON, boxPos[2]-EPSILON, boxPosEnd[0]+EPSILON, boxPosEnd[1]+EPSILON, boxPosEnd[2]+EPSILON, dim=2)
-            gmsh.model.addPhysicalGroup(2, [x[1] for x in entities], magnetTag)
-            gmsh.model.setPhysicalName(2, magnetTag, "Magnet_" + str(magnetTag))
+            #boxPosEnd = boxPos + magnet.dimension*1e3
+            #entities = gmsh.model.occ.getEntitiesInBoundingBox(boxPos[0]-EPSILON, boxPos[1]-EPSILON, boxPos[2]-EPSILON, boxPosEnd[0]+EPSILON, boxPosEnd[1]+EPSILON, boxPosEnd[2]+EPSILON, dim=2)
+            entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,magnetTag), dim=2)
+            physicalTag = gmsh.model.addPhysicalGroup(2, [x[1] for x in entities], index)
+            gmsh.model.setPhysicalName(2, physicalTag, "MagnetSurf" + str(magnetTag))
+            physicalTag = gmsh.model.addPhysicalGroup(3, [magnetTag], index+1001)
+            gmsh.model.setPhysicalName(3, physicalTag, "MagnetVol" + str(magnetTag))
+            magnetData += "angle_" + str(index) + " = " + str(magnet.angle) + "\n"
+            entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,magnetTag), dim=0)            
+            gmsh.model.occ.mesh.setSize(entities,meshResolution)
+        magnetData += "]"
+        with open("magnets_data.pro", "w") as text_file:
+            text_file.write(magnetData)        
 
 
 if __name__ == '__main__':
@@ -99,9 +113,17 @@ if __name__ == '__main__':
         plt.colorbar(qq)
         plt.show()    
     if True:
+        gmsh.model.add("ring")
+        boxTag = gmsh.model.occ.addBox(-250, -250, -250, 500, 500, 500)     
+        gmsh.model.occ.synchronize()    
+        meshResolution = 6
+        entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,boxTag), dim=0)            
+        gmsh.model.occ.mesh.setSize(entities,meshResolution)        
+        physicalTag = gmsh.model.addPhysicalGroup(3, [boxTag], 1000) 
+        gmsh.model.setPhysicalName(3, physicalTag, "Air")       
         testRing1.generateGeometry()
         gmsh.model.occ.synchronize()
         gmsh.model.mesh.generate(3)        
         gmsh.write("ring.geo_unrolled")
-        #gmsh.write("ring.msh")
+        gmsh.write("ring.msh")
 
