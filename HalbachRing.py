@@ -49,29 +49,29 @@ class HalbachRing:
 
     def generateGeometry(self):        
         magnetTags = []   
-        EPSILON = 1
-        meshResolution = 6
+        meshResolution = 0.003
         magnetData = "DefineConstant[\n"
-        magnetData += "NumMagnets = " + str(len(self.magnets)) + "\n"
+        magnetData += "NumMagnets = " + str(len(self.magnets)) + ",\n"
         for index, magnet in enumerate(self.magnets):
-            boxPos = np.array(magnet.position)*1e3 + magnet.dimension*1e3/2
-            magnetTag = gmsh.model.occ.addBox(boxPos[0], boxPos[1], boxPos[2], magnet.dimension*1e3, magnet.dimension*1e3, magnet.dimension*1e3)
-            magnetTags.append(magnetTag)
-            gmsh.model.occ.rotate([[3, magnetTag]], magnet.position[0]*1e3, magnet.position[1]*1e3, magnet.position[2]*1e3, 0, 0, 1, magnet.angle)
+            index += 1
+            boxPos = np.array(magnet.position) - magnet.dimension/2
+            magnetTag = gmsh.model.occ.addBox(boxPos[0], boxPos[1], boxPos[2], magnet.dimension, magnet.dimension, magnet.dimension)
+            magnetTags.append(magnetTag+1)
+            gmsh.model.occ.rotate([[3, magnetTag]], magnet.position[0], magnet.position[1], magnet.position[2], 0, 0, 1, magnet.angle)
             gmsh.model.occ.synchronize()            
-            #boxPosEnd = boxPos + magnet.dimension*1e3
-            #entities = gmsh.model.occ.getEntitiesInBoundingBox(boxPos[0]-EPSILON, boxPos[1]-EPSILON, boxPos[2]-EPSILON, boxPosEnd[0]+EPSILON, boxPosEnd[1]+EPSILON, boxPosEnd[2]+EPSILON, dim=2)
             entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,magnetTag), dim=2)
-            physicalTag = gmsh.model.addPhysicalGroup(2, [x[1] for x in entities], index)
-            gmsh.model.setPhysicalName(2, physicalTag, "MagnetSurf" + str(magnetTag))
-            physicalTag = gmsh.model.addPhysicalGroup(3, [magnetTag], index+1001)
-            gmsh.model.setPhysicalName(3, physicalTag, "MagnetVol" + str(magnetTag))
+            physicalTag = gmsh.model.addPhysicalGroup(2, [x[1] for x in entities], index + 1000)
+            #gmsh.model.setPhysicalName(2, physicalTag, "MagnetSurf" + str(index))
+            gmsh.model.occ.synchronize()              
+            physicalTag = gmsh.model.addPhysicalGroup(3, [magnetTag], index)
+            #gmsh.model.setPhysicalName(3, physicalTag, "MagnetVol" + str(index))
             magnetData += "angle_" + str(index) + " = " + str(magnet.angle) + "\n"
             entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,magnetTag), dim=0)            
             gmsh.model.occ.mesh.setSize(entities,meshResolution)
-        magnetData += "]"
+        magnetData += "];"
         with open("magnets_data.pro", "w") as text_file:
             text_file.write(magnetData)        
+        return magnetTags
 
 
 if __name__ == '__main__':
@@ -114,16 +114,31 @@ if __name__ == '__main__':
         plt.show()    
     if True:
         gmsh.model.add("ring")
-        boxTag = gmsh.model.occ.addBox(-250, -250, -250, 500, 500, 500)     
-        gmsh.model.occ.synchronize()    
-        meshResolution = 6
-        entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,boxTag), dim=0)            
+        meshResolution = 0.024
+        numMagnets = len(testRing1.magnets)
+        boxDimensions = (.250, .250, .250)
+        boxTag = gmsh.model.occ.addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))     
+        entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,boxTag), dim=2)   
         gmsh.model.occ.mesh.setSize(entities,meshResolution)        
-        physicalTag = gmsh.model.addPhysicalGroup(3, [boxTag], 1000) 
-        gmsh.model.setPhysicalName(3, physicalTag, "Air")       
-        testRing1.generateGeometry()
+        gmsh.model.occ.synchronize()    
+        # remove bounding box volume to prevent overlapping volumes
+        gmsh.model.occ.remove(gmsh.model.getEntities(3))
+        # but keep bounding box surface Loop
+        gmsh.model.occ.synchronize()    
+        gmsh.option.setNumber("Mesh.Optimize",1)
+        gmsh.option.setNumber("Geometry.ExactExtrusion",0)
+        gmsh.option.setNumber("Solver.AutoMesh",2)
+        gmsh.option.setNumber("Geometry.ExactExtrusion",0)
+        surfaceLoops = testRing1.generateGeometry()
         gmsh.model.occ.synchronize()
-        gmsh.model.mesh.generate(3)        
+        # add bounding box 
+        airVol = gmsh.model.occ.addVolume([boxTag] + surfaceLoops)
+        gmsh.model.occ.synchronize()
+        physicalTag = gmsh.model.addPhysicalGroup(3, [airVol], numMagnets+1) 
+        physicalTag = gmsh.model.addPhysicalGroup(2, [boxTag], numMagnets+2)        
+        gmsh.model.occ.synchronize()
+        gmsh.model.mesh.generate(3)    
         gmsh.write("ring.geo_unrolled")
         gmsh.write("ring.msh")
+        gmsh.finalize()
 
