@@ -3,12 +3,13 @@ import HalbachRing as HalbachRing
 import CubeMagnet as CubeMagnet
 import HalbachSlice as HalbachSlice
 import matplotlib.pyplot as plt
-from solid import *
-from solid.utils import *
 import json as json
 import copy
 import argparse
 import gmsh
+from solid import *
+from solid.utils import *
+from shutil import copyfile
 
 class HalbachCylinder:
     def __init__(self):
@@ -136,6 +137,7 @@ if __name__ == '__main__':
     parser.add_argument('filename', nargs='+', help='a .json file that describes the geometry')
     parser.add_argument('--contour', action='store_true', help='creates a contour plot at z=0')
     parser.add_argument('--quiver', action='store_true', help='creates a quiver plot at z=0')
+    parser.add_argument('--fem', action='store_true', help='generate a .geo and .pro file for simulation with GMSH=GetDP')
     parser.add_argument('-o', nargs='?', default='out.scad', help='name of output scad file')
     args = parser.parse_args()     
     halbachCylinder = HalbachCylinder()
@@ -179,5 +181,47 @@ if __name__ == '__main__':
         fig2 = plt.figure(figsize=(16,12))
         qq = plt.tricontour(evalPointsz0[0], evalPointsz0[1], B_abs, cmap=plt.cm.jet)
         plt.colorbar(qq)
+    if args.fem:
+        gmsh.initialize()        
+        gmsh.model.add("cylinder")
+        meshResolution = 0.024
+        boxDimensions = (.300, .300, .300)
+        gmsh.model.occ.synchronize()    
+        gmsh.option.setNumber("Mesh.Optimize",1)
+        gmsh.option.setNumber("Geometry.ExactExtrusion",0)
+        gmsh.option.setNumber("Solver.AutoMesh",2)
+        gmsh.option.setNumber("Geometry.ExactExtrusion",0)
+        numMagnets = 0
+        magnetData = "DefineConstant[\n"
+        for numSlice, slice in enumerate(halbachCylinder.slices):
+            print("Slice " + str(numSlice))
+            for numRing, ring in enumerate(slice.rings):
+                numMagnetsProcessed, magnetAngles = ring.generateGeometry(numMagnets)
+                numMagnets += numMagnetsProcessed
+                magnetData += magnetAngles
+                print("   Ring " + str(numRing))
+        gmsh.model.occ.synchronize()
+        magnetData += "NumMagnets = " + str(numMagnets) + "\n"
+        magnetData += "SurfaceOffset = 10000\n"
+        magnetData += "];"
+        with open("cylinder_magnets_data.pro", "w") as text_file:
+            text_file.write(magnetData)            
+
+        # add bounding box 
+        #airVol, airSL = addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))             
+        airVol = gmsh.model.occ.addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))             
+        gmsh.model.occ.synchronize()
+        airVolBoundary = [x[1] for x in gmsh.model.getBoundary([[3,airVol]], oriented=False)]
+        gmsh.model.occ.fragment(gmsh.model.occ.getEntities(3), [])
+        gmsh.model.occ.synchronize()
+        physicalTag = gmsh.model.addPhysicalGroup(3, [airVol], numMagnets+1) 
+        physicalTag = gmsh.model.addPhysicalGroup(2, airVolBoundary, numMagnets+2)       
+        gmsh.model.occ.synchronize()
+        gmsh.model.mesh.generate(3)    
+        gmsh.write("cylinder.geo_unrolled")
+        copyfile("cylinder.geo_unrolled", "cylinder.geo") # opening the .pro file in gmsh GUI searches for a .geo file
+        gmsh.write("cylinder.msh")
+        #gmsh.fltk.run()
+        gmsh.finalize()
     plt.show()    
     

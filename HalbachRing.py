@@ -82,21 +82,24 @@ class HalbachRing:
         #plt.gca().add_patch(circle)
 
     def generateGeometry(self, startIndex=0):        
-        meshResolution = 0.003
+        meshResolution = 0.006
+        magnetAngles = ""
         for index, magnet in enumerate(self.magnets):
             index += 1
-            boxPos = np.array(magnet.position) - magnet.dimension/2
+            boxPos = np.array(magnet.position) - magnet.dimension/2 + (0,0,self.position)
             magnetTag = gmsh.model.occ.addBox(boxPos[0], boxPos[1], boxPos[2], magnet.dimension, magnet.dimension, magnet.dimension)
-            gmsh.model.occ.rotate([[3, magnetTag]], magnet.position[0], magnet.position[1], magnet.position[2], 0, 0, 1, magnet.angle)
+            gmsh.model.occ.rotate([[3, magnetTag]], magnet.position[0], magnet.position[1], magnet.position[2] + self.position, 0, 0, 1, magnet.angle)
             gmsh.model.occ.synchronize()            
-            entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,magnetTag), dim=2)
-            physicalTag = gmsh.model.addPhysicalGroup(2, [x[1] for x in entities], index + startIndex + 1000)
+            #entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,magnetTag), dim=2)
+            entities = gmsh.model.getBoundary([[3, magnetTag]], oriented=False)
+            physicalTag = gmsh.model.addPhysicalGroup(2, [x[1] for x in entities], index + startIndex + 10000)
             #gmsh.model.setPhysicalName(2, physicalTag, "MagnetSurf" + str(index))
-            gmsh.model.occ.synchronize()              
             physicalTag = gmsh.model.addPhysicalGroup(3, [magnetTag], index + startIndex)
             #gmsh.model.setPhysicalName(3, physicalTag, "MagnetVol" + str(index))
             entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,magnetTag), dim=0)            
             gmsh.model.occ.mesh.setSize(entities,meshResolution)
+            magnetAngles += "angle_" + str(index + startIndex) + " = " + str(magnet.angle) + "\n"
+        return len(self.magnets), magnetAngles
 
 
 if __name__ == '__main__':
@@ -151,7 +154,6 @@ if __name__ == '__main__':
         gmsh.model.occ.synchronize()
         numMagnets = len(testRing1.magnets)+len(testRing2.magnets)
         magnetData = "DefineConstant[\n"
-        magnetData += "NumMagnets = " + str(numMagnets) + ",\n"
         index = 1
         for magnet in testRing1.magnets:
             magnetData += "angle_" + str(index) + " = " + str(magnet.angle) + "\n"
@@ -159,18 +161,21 @@ if __name__ == '__main__':
         for magnet in testRing2.magnets:
             magnetData += "angle_" + str(index) + " = " + str(magnet.angle) + "\n"
             index += 1
+        magnetData += "NumMagnets = " + str(numMagnets) + "\n"
+        magnetData += "SurfaceOffset = 10000\n"
         magnetData += "];"
-        with open("magnets_data.pro", "w") as text_file:
+        with open("ring_magnets_data.pro", "w") as text_file:
             text_file.write(magnetData)            
 
         # add bounding box 
         #airVol, airSL = addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))             
-        airVol = gmsh.model.occ.addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))             
-        airSL = airVol  # hack to get the surface loop of airVol    
+        airVol = gmsh.model.occ.addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))   
+        gmsh.model.occ.synchronize()
+        airVolBoundary = [x[1] for x in gmsh.model.getBoundary([[3,airVol]], oriented=False)]
         gmsh.model.occ.fragment(gmsh.model.occ.getEntities(3), [])
         gmsh.model.occ.synchronize()
         physicalTag = gmsh.model.addPhysicalGroup(3, [airVol], numMagnets+1) 
-        physicalTag = gmsh.model.addPhysicalGroup(2, [airSL], numMagnets+2)       
+        physicalTag = gmsh.model.addPhysicalGroup(2, airVolBoundary, numMagnets+2)        
         gmsh.model.occ.synchronize()
         gmsh.model.mesh.generate(3)    
         gmsh.write("ring.geo_unrolled")
