@@ -49,7 +49,7 @@ if __name__ == '__main__':
     parser.add_argument('--contour', action='store_true', help='creates a contour plot at z=0')
     parser.add_argument('--quiver', action='store_true', help='creates a quiver plot at z=0')
     parser.add_argument('--fem', action='store_true', help='generate a .geo and .pro file for simulation with GMSH=GetDP')
-    parser.add_argument('-o', nargs='?', default='out.scad', help='name of output scad file')
+    parser.add_argument('-o', nargs='?', default='input filename without extension', help='output filename without extension')
     args = parser.parse_args()     
     halbachCylinder = HalbachCylinder.HalbachCylinder()
 
@@ -57,8 +57,11 @@ if __name__ == '__main__':
     halbachCylinder.loadJSON(args.filename[0])
     print(args.filename[0] + " loaded")
 
-    print("writing " + args.o)
-    halbachCylinder.generateSCADFile(args.o)
+    outputFilename = args.o
+    if args.o == "input filename without extension":
+        outputFilename = os.path.splitext(os.path.basename(args.filename[0]))[0]
+    print("writing " + outputFilename + ".scad")
+    halbachCylinder.generateSCADFile(outputFilename + ".scad")
 
     # alternative to json file
     # halbachCylinder = generateExampleGeometry()
@@ -96,7 +99,9 @@ if __name__ == '__main__':
         gmsh.initialize()        
         gmsh.model.add("cylinder")
         meshResolution = 0.024
-        boxDimensions = (.300, .300, .300)
+        BoundingBoxDiameter = 0.3        
+        DSV = 0.2
+        boxDimensions = (BoundingBoxDiameter, BoundingBoxDiameter, BoundingBoxDiameter)
         gmsh.model.occ.synchronize()    
         gmsh.option.setNumber("Mesh.Optimize",1)
         gmsh.option.setNumber("Geometry.ExactExtrusion",0)
@@ -116,10 +121,10 @@ if __name__ == '__main__':
                 print("   Ring " + str(numRing))
         gmsh.model.occ.synchronize()
         magnetData += "NumMagnets = " + str(numMagnets) + "\n"
-        magnetData += "SurfaceOffset = 10000\n"
-        magnetData += "];"
-        with open("cylinder_magnets_data.pro", "w") as text_file:
-            text_file.write(magnetData)            
+        magnetData += "SurfaceRegionOffset = 10000\n"
+        magnetData += "DSV = " + str(DSV) + "\n"
+        magnetData += "outputFilename = " + "\"ring\"" + "\n"                
+        magnetData += "];\n"
 
         # add bounding box 
         #airVol, airSL = addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))             
@@ -132,11 +137,15 @@ if __name__ == '__main__':
         physicalTag = gmsh.model.addPhysicalGroup(2, airVolBoundary, numMagnets+2)       
         gmsh.model.occ.synchronize()
         gmsh.model.mesh.generate(3)    
-        gmsh.write("cylinder.geo_unrolled")
-        copyfile("cylinder.geo_unrolled", "cylinder.geo") # opening the .pro file in gmsh GUI searches for a .geo file
-        os.remove("cylinder.geo_unrolled")
-        gmsh.write("cylinder.msh")
-        gmsh.write("cylinder.geo.opt")
+
+        with open(outputFilename + ".pro", "w") as text_file:
+            text_file.write(magnetData)       
+            text_file.write("Include \"templates/cylinder_template.pro\"\n")       
+        gmsh.write(outputFilename + ".geo_unrolled")
+        copyfile(outputFilename + ".geo_unrolled", outputFilename + ".geo") # opening the .pro file in gmsh GUI searches for a .geo file
+        os.remove(outputFilename + ".geo_unrolled")
+        gmsh.write(outputFilename + ".msh")
+        gmsh.write(outputFilename + ".geo.opt")
         #gmsh.fltk.run()
         gmsh.finalize()
     plt.show()    

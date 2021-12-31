@@ -144,7 +144,9 @@ if __name__ == '__main__':
     if True:
         gmsh.model.add("ring")
         meshResolution = 0.024
-        boxDimensions = (.250, .250, .250)
+        DSV = 0.2
+        BoundingBoxDiameter = 0.25
+        boxDimensions = (BoundingBoxDiameter, BoundingBoxDiameter, BoundingBoxDiameter)
         gmsh.model.occ.synchronize()    
         gmsh.option.setNumber("Mesh.Optimize", 1)
         gmsh.option.setNumber("Geometry.ExactExtrusion", 0)
@@ -167,10 +169,11 @@ if __name__ == '__main__':
             magnetData += "angle_" + str(index) + " = " + str(magnet.angle) + "\n"
             index += 1
         magnetData += "NumMagnets = " + str(numMagnets) + "\n"
-        magnetData += "SurfaceOffset = 10000\n"
-        magnetData += "];"
-        with open("ring_magnets_data.pro", "w") as text_file:
-            text_file.write(magnetData)            
+        magnetData += "SurfaceRegionOffset = 10000\n"
+        magnetData += "DSV = " + str(DSV) + "\n"
+        magnetData += "outputFilename = " + "\"ring\"" + "\n"        
+        magnetData += "];\n"
+           
 
         # add bounding box 
         #airVol, airSL = addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))             
@@ -183,6 +186,9 @@ if __name__ == '__main__':
         physicalTag = gmsh.model.addPhysicalGroup(2, airVolBoundary, numMagnets+2)        
         gmsh.model.occ.synchronize()
         gmsh.model.mesh.generate(3)    
+        with open("ring.pro", "w") as text_file:
+            text_file.write(magnetData)         
+            text_file.write("Include \"templates/ring_template.pro\"\n")       
         gmsh.write("ring.geo_unrolled")
         copyfile("ring.geo_unrolled", "ring.geo") # opening the .pro file in gmsh GUI searches for a .geo file
         os.remove("ring.geo_unrolled")
