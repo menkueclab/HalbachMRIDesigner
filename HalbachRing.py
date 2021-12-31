@@ -1,9 +1,10 @@
 import numpy as np
-import CubeMagnet as CubeMagnet
+import CubeMagnet
 import matplotlib.pyplot as plt
 import gmsh
 import math
 from shutil import copyfile
+import os
 
 def addBox(x, y, z, dx, dy, dz, meshSize = 0):
     # needed becaues occ.addBox does not return the surface loop tag
@@ -145,10 +146,14 @@ if __name__ == '__main__':
         meshResolution = 0.024
         boxDimensions = (.250, .250, .250)
         gmsh.model.occ.synchronize()    
-        gmsh.option.setNumber("Mesh.Optimize",1)
-        gmsh.option.setNumber("Geometry.ExactExtrusion",0)
-        gmsh.option.setNumber("Solver.AutoMesh",2)
-        gmsh.option.setNumber("Geometry.ExactExtrusion",0)
+        gmsh.option.setNumber("Mesh.Optimize", 1)
+        gmsh.option.setNumber("Geometry.ExactExtrusion", 0)
+        gmsh.option.setNumber("Solver.AutoMesh", 2)
+        gmsh.option.setNumber("Geometry.ExactExtrusion", 0)
+        gmsh.option.setNumber("Mesh.MeshSizeFactor", 1)
+        gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 1)
+        gmsh.option.setNumber("Mesh.MeshSizeMin", 0.003)
+        gmsh.option.setNumber("Mesh.MeshSizeMax", 1)
         testRing1.generateGeometry()
         testRing2.generateGeometry(len(testRing1.magnets))
         gmsh.model.occ.synchronize()
@@ -180,7 +185,9 @@ if __name__ == '__main__':
         gmsh.model.mesh.generate(3)    
         gmsh.write("ring.geo_unrolled")
         copyfile("ring.geo_unrolled", "ring.geo") # opening the .pro file in gmsh GUI searches for a .geo file
+        os.remove("ring.geo_unrolled")
         gmsh.write("ring.msh")
+        gmsh.write("ring.geo.opt")
         #gmsh.fltk.run()
         gmsh.finalize()
 
