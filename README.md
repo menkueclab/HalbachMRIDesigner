@@ -4,9 +4,8 @@ This tool creates an OpenSCAD geometry of a halbach cylinder which generates a h
 To frabricate the individual slices by milling or 3d printing, you can import the OpenSCAD model into FreeCAD and then export a separate file for every slice.
 
 # Running the script
-- install python packages: numpy, matplotlib
-- clone https://github.com/catkira/SolidPython (this version has a patch, the original does not support the 'render()' command)
-- do pip install -e path-to-SolidPython-repo
+- pip install -U pip
+- pip install -r requirements.txt
 - run 'python HalbachCylinder.py examples/mri1.conf --contour --quiver' with python 3.8 or higher
 - the generated .scad file should look like examples/cylinder.scad
 - in OpenSCAD it should look like this
