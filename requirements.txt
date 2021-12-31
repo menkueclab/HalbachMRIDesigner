@@ -1,0 +1,4 @@
+gmsh
+numpy
+matplotlib
+git+https://github.com/catkira/SolidPython
