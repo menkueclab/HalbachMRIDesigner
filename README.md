@@ -25,6 +25,9 @@ To frabricate the individual slices by milling or 3d printing, you can import th
 
 # FEM Simulation
 To create files needed for a FEM simulation, add "--fem" to the command line when executing HalbachMRIDesigner.py. The generated .pro file can then be loaded into ONELAB(https://onelab.info/) for performing the FEM simulation.
+![Cylinder in Gmsh](https://github.com/menkueclab/HalbachMRIDesigner/blob/master/examples/cylinderNoMesh.png?raw=true)
+![Cylinder in Gmsh with mesh](https://github.com/menkueclab/HalbachMRIDesigner/blob/master/examples/cylinderMesh.png?raw=true)
+![Cylinder in Gmsh with field](https://github.com/menkueclab/HalbachMRIDesigner/blob/master/examples/cylinderFEMfield.png?raw=true)
 
 # Contributions
 - Benjamin Menkuec (code and ideas)
