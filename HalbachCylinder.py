@@ -75,9 +75,20 @@ class HalbachCylinder:
         numConnectionRods = int(params['numConnectionRods'])
         connectionRodsDiameter = float(params['connectionRodsDiameter'])/1e3
         connectionRodsArcRadius = float(params['connectionRodsArcRadius'])/1e3
+        magnetTypes = []
+        for magnet in params['magnets']:
+            if magnet['shape'] == "cube":
+                dimension = float(magnet['dimension'])*1e-3
+                BR = float(magnet['BR'])
+                mur = float(magnet['mur'])
+                cubeMagnet = CubeMagnet.CubeMagnet(dimension, BR, mur)
+                magnetTypes.append(cubeMagnet)
+            else:
+                print("Magnet shape \"" + magnet['shape'] + "\" is not supported!")
+        defaultMagnetType = params['defaultMagnetType']
         rings = []
         for ring in params['rings']:
-            rings.append(HalbachRing.HalbachRing(0, float(ring['radius'])/1e3, ring['numMagnets'], CubeMagnet))
+            rings.append(HalbachRing.HalbachRing(0, float(ring['radius'])/1e3, ring['numMagnets'], magnetTypes[defaultMagnetType]))
         for index, slice in enumerate(params['slices']):
             if 'standHeight' in slice:
                 standHeight = float(slice['standHeight'])/1e3

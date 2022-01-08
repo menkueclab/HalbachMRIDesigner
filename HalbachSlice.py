@@ -73,7 +73,7 @@ class HalbachSlice:
             for magnet in ring.magnets:
                 cubes.append(translate([magnet.position[0]*1e3, magnet.position[1]*1e3, (magnet.position[2] + ring.position)*1e3])(
                     rotate([0, 0, magnet.angle*180/np.pi])(
-                        cube([magnet.dimension*1e3, magnet.dimension*1e3, magnet.dimension*1e3+2], center=True)
+                        cube([magnet.magnetType.dimension*1e3, magnet.magnetType.dimension*1e3, magnet.magnetType.dimension*1e3+2], center=True)
                     )
                 ))
         rods = []

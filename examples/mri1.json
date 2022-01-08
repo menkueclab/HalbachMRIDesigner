@@ -4,9 +4,12 @@
     [
         {
             "dimension" : "12",
-            "shape" : "cube" 
+            "shape" : "cube",
+            "BR" : "1.3",
+            "mur" : "1"
         }
     ],
+    "defaultMagnetType" : 0,
     "rings":
     [
         {

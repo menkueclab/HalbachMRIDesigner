@@ -1,10 +1,12 @@
 import numpy as np
 import CubeMagnet
+import Magnet
 import matplotlib.pyplot as plt
 import gmsh
 import math
 from shutil import copyfile
 import os
+import pickle
 
 def addBox(x, y, z, dx, dy, dz, meshSize = 0):
     # needed becaues occ.addBox does not return the surface loop tag
@@ -44,7 +46,7 @@ def addBox(x, y, z, dx, dy, dz, meshSize = 0):
 
 class HalbachRing:
     # all units are SI units
-    def __init__(self, position, radius, numMagnets, TMagnet):
+    def __init__(self, position, radius, numMagnets, magnetType):
         self.radius = radius
         self.numMagnets = numMagnets
         self.position = position
@@ -53,7 +55,7 @@ class HalbachRing:
         self.magnets = []
         k = 2
         for angle in magnetAngles:
-            self.magnets.append(TMagnet.Magnet((radius*np.cos(angle), radius*np.sin(angle), 0), angle*k))
+            self.magnets.append(Magnet.Magnet((radius*np.cos(angle), radius*np.sin(angle), 0), angle*k, magnetType))
 
     def setPosition(self, position):
         self.position = position
@@ -82,25 +84,40 @@ class HalbachRing:
         #circle=plt.Circle((magnet.position[0],magnet.position[1]),0.001,color='green')
         #plt.gca().add_patch(circle)
 
+    def getDict(self, startIndex):
+        dataDict = []
+        for index, magnet in enumerate(self.magnets, start=1):
+            dictItem = {
+                "angle" : magnet.angle,
+                "BR"  : magnet.magnetType.BR, 
+                "mur" : magnet.magnetType.mur,
+                "id" : index + startIndex
+                }
+            dataDict.append(dictItem)
+        return dataDict
+
+
+
     def generateGeometry(self, startIndex=0):        
         meshResolution = 0.006
-        magnetAngles = ""
-        for index, magnet in enumerate(self.magnets):
-            index += 1
-            boxPos = np.array(magnet.position) - magnet.dimension/2 + (0,0,self.position)
-            magnetTag = gmsh.model.occ.addBox(boxPos[0], boxPos[1], boxPos[2], magnet.dimension, magnet.dimension, magnet.dimension)
+        magnetData = ""
+        for index, magnet in enumerate(self.magnets, start=1):
+            boxPos = np.array(magnet.position) - magnet.magnetType.dimension/2 + (0,0,self.position)
+            magnetTag = gmsh.model.occ.addBox(boxPos[0], boxPos[1], boxPos[2], magnet.magnetType.dimension, magnet.magnetType.dimension, magnet.magnetType.dimension)
             gmsh.model.occ.rotate([[3, magnetTag]], magnet.position[0], magnet.position[1], magnet.position[2] + self.position, 0, 0, 1, magnet.angle)
             gmsh.model.occ.synchronize()            
-            #entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,magnetTag), dim=2)
             entities = gmsh.model.getBoundary([[3, magnetTag]], oriented=False)
             physicalTag = gmsh.model.addPhysicalGroup(2, [x[1] for x in entities], index + startIndex + 10000)
-            #gmsh.model.setPhysicalName(2, physicalTag, "MagnetSurf" + str(index))
             physicalTag = gmsh.model.addPhysicalGroup(3, [magnetTag], index + startIndex)
-            #gmsh.model.setPhysicalName(3, physicalTag, "MagnetVol" + str(index))
-            entities = gmsh.model.occ.getEntitiesInBoundingBox(*gmsh.model.occ.getBoundingBox(3,magnetTag), dim=0)            
-            gmsh.model.occ.mesh.setSize(entities,meshResolution)
-            magnetAngles += "angle_" + str(index + startIndex) + " = " + str(magnet.angle) + "\n"
-        return len(self.magnets), magnetAngles
+            gmsh.model.occ.mesh.setSize(gmsh.model.getBoundary([[3, magnetTag]], oriented = False, recursive = True) ,meshResolution)
+            magnetData += "angle_" + str(index + startIndex) + " = " + str(magnet.angle) + "\n"
+            magnetData += "BR_" + str(index + startIndex) + " = " + str(magnet.magnetType.BR) + "\n"
+            magnetData += "mur_" + str(index + startIndex) + " = " + str(magnet.magnetType.mur) + "\n"
+        return len(self.magnets), magnetData
+
+
+def threadedGmshGUI():
+    gmsh.fltk.run()
 
 
 if __name__ == '__main__':
@@ -119,8 +136,9 @@ if __name__ == '__main__':
     mask[np.square(grid[0]) + np.square(grid[1]) + np.square(grid[2]) <= (dsv/2)**2] = 1       
     evalPoints = [g[mask==1] for g in grid]
     
-    testRing1 = HalbachRing(0, 0.195, 66, CubeMagnet)
-    testRing2 = HalbachRing(0, 0.195+0.021, 66+7, CubeMagnet)
+    cubeMagnet = CubeMagnet.CubeMagnet(0.012, 1.3, 1)
+    testRing1 = HalbachRing(0, 0.195, 66, cubeMagnet)
+    testRing2 = HalbachRing(0, 0.195+0.021, 66+7, cubeMagnet)
     B0 = testRing1.calculateB(evalPoints)
     B0 += testRing2.calculateB(evalPoints)
     
@@ -143,12 +161,16 @@ if __name__ == '__main__':
         plt.show()    
     if True:
         gmsh.model.add("ring")
-        meshResolution = 0.024
+        meshResolution = 0.05
+        meshResolutionDSV = 0.006
+        meshResolutionDSVMagnet = 0.05
+        meshResolutionMagnet = 0.003
         DSV = 0.2
         BoundingBoxDiameter = 0.25
         boxDimensions = (BoundingBoxDiameter, BoundingBoxDiameter, BoundingBoxDiameter)
         gmsh.model.occ.synchronize()    
         gmsh.option.setNumber("Mesh.Optimize", 1)
+        gmsh.option.setNumber("Mesh.MshFileVersion", 2)  # for sparselizard
         gmsh.option.setNumber("Geometry.ExactExtrusion", 0)
         gmsh.option.setNumber("Solver.AutoMesh", 2)
         gmsh.option.setNumber("Geometry.ExactExtrusion", 0)
@@ -156,18 +178,13 @@ if __name__ == '__main__':
         gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 1)
         gmsh.option.setNumber("Mesh.MeshSizeMin", 0.003)
         gmsh.option.setNumber("Mesh.MeshSizeMax", 1)
-        testRing1.generateGeometry()
-        testRing2.generateGeometry(len(testRing1.magnets))
+        index, magnetData1 = testRing1.generateGeometry()
+        index, magnetData2 = testRing2.generateGeometry(index)
         gmsh.model.occ.synchronize()
         numMagnets = len(testRing1.magnets)+len(testRing2.magnets)
         magnetData = "DefineConstant[\n"
-        index = 1
-        for magnet in testRing1.magnets:
-            magnetData += "angle_" + str(index) + " = " + str(magnet.angle) + "\n"
-            index += 1
-        for magnet in testRing2.magnets:
-            magnetData += "angle_" + str(index) + " = " + str(magnet.angle) + "\n"
-            index += 1
+        magnetData += magnetData1
+        magnetData += magnetData2
         magnetData += "NumMagnets = " + str(numMagnets) + "\n"
         magnetData += "SurfaceRegionOffset = 10000\n"
         magnetData += "DSV = " + str(DSV) + "\n"
@@ -181,19 +198,41 @@ if __name__ == '__main__':
         gmsh.model.occ.synchronize()
         airVolBoundary = [x[1] for x in gmsh.model.getBoundary([[3,airVol]], oriented=False)]
         gmsh.model.occ.fragment(gmsh.model.occ.getEntities(3), [])
+        # add after fragment() so that dsv is still included in the airVol
+        dsvVol = gmsh.model.occ.addSphere(0, 0, 0, dsv/2)   
         gmsh.model.occ.synchronize()
-        physicalTag = gmsh.model.addPhysicalGroup(3, [airVol], numMagnets+1) 
+        dsvVolBoundary = [x[1] for x in gmsh.model.getBoundary([[3,dsvVol]], oriented=False)]
+        gmsh.model.occ.synchronize()
+        physicalTag = gmsh.model.addPhysicalGroup(3, [airVol, dsvVol], numMagnets+1) 
         physicalTag = gmsh.model.addPhysicalGroup(2, airVolBoundary, numMagnets+2)        
+        physicalTag = gmsh.model.addPhysicalGroup(3, [dsvVol], numMagnets+3) 
+        physicalTag = gmsh.model.addPhysicalGroup(2, dsvVolBoundary, numMagnets+4) 
         gmsh.model.occ.synchronize()
+        gmsh.model.mesh.field.add("Ball", 1)
+        gmsh.model.mesh.field.setNumber(1, "Radius", dsv/2)
+        gmsh.model.mesh.field.setNumber(1, "Thickness", 0.02)
+        gmsh.model.mesh.field.setNumber(1, "VIn", meshResolutionDSV)
+        gmsh.model.mesh.field.setNumber(1, "VOut", meshResolutionDSVMagnet)
+        gmsh.model.mesh.field.setAsBackgroundMesh(1)
         gmsh.model.mesh.generate(3)    
         with open("ring.pro", "w") as text_file:
             text_file.write(magnetData)         
-            text_file.write("Include \"templates/ring_template.pro\"\n")       
+            text_file.write("Include \"templates/ring_template.pro\"\n")
+        dataDict = testRing1.getDict(0)
+        dataDict += testRing2.getDict(len(testRing1.magnets))
+        settingsDict = {
+                "dataDict" : dataDict,
+                "SurfaceRegionOffset" : 10000
+            }       
+        with open("ring.py", "wb") as python_file:
+            pickle.dump(settingsDict, python_file)
         gmsh.write("ring.geo_unrolled")
         copyfile("ring.geo_unrolled", "ring.geo") # opening the .pro file in gmsh GUI searches for a .geo file
         os.remove("ring.geo_unrolled")
         gmsh.write("ring.msh")
         gmsh.write("ring.geo.opt")
+        gmsh.merge("ring.pro")
+        #gmsh.onelab.run()
         #gmsh.fltk.run()
         gmsh.finalize()
 

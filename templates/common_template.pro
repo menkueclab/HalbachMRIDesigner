@@ -5,13 +5,6 @@ DefineConstant[
     Flag_Analysis = {0,
         Choices { 0 = "H-formulation", 1 = "A-formulation"},
         Name "Input/1Formulation" },
-    BR = {1.3, Min 0, Max 1e3, Step 0.001,
-        Name Sprintf("Input/2Remnant magnetic flux density [T]")},
-    MUR = {1, Min 1, Max 1000, Step 10,
-        Name Sprintf("Input/3Relative permeability")},
-    HC = {BR / mu0 / MUR,
-        Name Sprintf("Input/4Coercive magnetic field [Am^-1]"),
-        ReadOnly 1},
     NumMagnets_ = {NumMagnets,
         Name Sprintf("Input/5Number of magnets"),
         ReadOnly 1}    
@@ -25,6 +18,7 @@ Group{
     Vol_Magnets_Mag += Region[Magnet~{i}]; // all the magnet volumes
   EndFor
   Air = Region[(NumMagnets + 1)];
+  Vol_DSV = Region[(NumMagnets + 3)];
   Vol_Mag = Region[{Air, Vol_Magnets_Mag}];
   Dirichlet_phi_0 = Region[(NumMagnets + 2)]; // boundary of air box
   Dirichlet_a_0 = Region[(NumMagnets + 2)]; // boundary of air box
@@ -33,13 +27,15 @@ Group{
 Function{
   mu[Air] = mu0;
   nu[Air] = 1.0/mu0;
+  mu[Vol_DSV] = mu0;
+  nu[Vol_DSV] = 1.0/mu0;
   For i In {1:NumMagnets}
     // coercive field of magnets
 
-    hc[Magnet~{i}] = Rotate[Vector[HC, 0, 0], 0, 0, angle~{i}];
-    br[Magnet~{i}] = Rotate[Vector[BR, 0, 0], 0, 0, angle~{i}];
-    mu[Magnet~{i}] = MUR * mu0;
-    nu[Magnet~{i}] = 1.0/(MUR * mu0);
+    hc[Magnet~{i}] = Rotate[Vector[BR~{i}/mu0, 0, 0], 0, 0, angle~{i}];
+    br[Magnet~{i}] = Rotate[Vector[BR~{i}, 0, 0], 0, 0, angle~{i}];
+    mu[Magnet~{i}] = mur~{i} * mu0;
+    nu[Magnet~{i}] = 1.0/(mur~{i} * mu0);
   EndFor
 }
 
@@ -183,12 +179,10 @@ PostProcessing {
       }
       { Name b_abs ; Value {
           Term { [Norm[ - mu[] * {d phi}]]  ; In Vol_Mag ; Jacobian JVol ; }
-          Term { [Norm[ - mu[] * hc[]   ]]   ; In Vol_Magnets_Mag ; Jacobian JVol ; }
         }
       }
       { Name b_x ; Value {
           Term { [Fabs[CompX[ - mu[] * {d phi}]]]  ; In Vol_Mag ; Jacobian JVol ; }
-          Term { [Fabs[CompX[ - mu[] * hc[]   ]]]   ; In Vol_Magnets_Mag ; Jacobian JVol ; }
         }
       }
       { Name h ; Value {

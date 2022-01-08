@@ -49,6 +49,7 @@ if __name__ == '__main__':
     parser.add_argument('--contour', action='store_true', help='creates a contour plot at z=0')
     parser.add_argument('--quiver', action='store_true', help='creates a quiver plot at z=0')
     parser.add_argument('--fem', action='store_true', help='generate a .geo and .pro file for simulation with GMSH=GetDP')
+    parser.add_argument('--scad', action='store_true', help='generate a .scad file')
     parser.add_argument('-o', nargs='?', default='input filename without extension', help='output filename without extension')
     args = parser.parse_args()     
     halbachCylinder = HalbachCylinder.HalbachCylinder()
@@ -60,11 +61,6 @@ if __name__ == '__main__':
     outputFilename = args.o
     if args.o == "input filename without extension":
         outputFilename = os.path.splitext(os.path.basename(args.filename[0]))[0]
-    print("writing " + outputFilename + ".scad")
-    halbachCylinder.generateSCADFile(outputFilename + ".scad")
-
-    # alternative to json file
-    # halbachCylinder = generateExampleGeometry()
 
     resolution = 0.005
     dsv = 0.2
@@ -83,6 +79,9 @@ if __name__ == '__main__':
     print("Homogeneity: " + str(((np.max(B_abs)-np.min(B_abs))/np.mean(B_abs))*1e6) + " ppm")
     evalPointsz0=(evalPoints[0][evalPoints[2]==0], evalPoints[1][evalPoints[2]==0], evalPoints[2][evalPoints[2]==0])
 
+    if args.scad:
+        print("writing " + outputFilename + ".scad")
+        halbachCylinder.generateSCADFile(outputFilename + ".scad")        
     if args.quiver:
         fig = plt.figure(figsize=(16,12))
         qq = plt.quiver(evalPointsz0[0], evalPointsz0[1], B0z0[:,0], B0z0[:,1], B_abs, cmap=plt.cm.jet)
