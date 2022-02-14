@@ -7,7 +7,7 @@ To frabricate the individual slices by milling or 3d printing, you can import th
 # Running the script
 - pip install -U pip
 - pip install -r requirements.txt
-- run 'python HalbachMRIDesigner.py examples/mri1.conf --contour --quiver' with python 3.8 or higher
+- run 'python HalbachMRIDesigner.py examples/mri1.json --contour --quiver' with python 3.8 or higher
 - the generated .scad file should look like examples/cylinder.scad
 - in OpenSCAD it should look like this
 
