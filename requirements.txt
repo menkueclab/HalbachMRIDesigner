@@ -1,4 +1,4 @@
 gmsh
 numpy
 matplotlib
-git+https://github.com/catkira/SolidPython
+git+https://github.com/catkira/SolidPython@master#egg=SolidPython

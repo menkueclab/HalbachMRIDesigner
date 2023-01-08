@@ -1,26 +1,22 @@
 import numpy as np
-import HalbachRing
+from HalbachRing import HalbachRing
 import CubeMagnet
-import HalbachSlice
-import HalbachCylinder
+from HalbachSlice import HalbachSlice
+from HalbachCylinder import HalbachCylinder
 import matplotlib.pyplot as plt
-import json as json
-import copy
 import argparse
 import gmsh
-from solid import *
-from solid.utils import *
 from shutil import copyfile
 import os
 
 def generateExampleGeometry():
     innerRingRadii = np.array([148, 151, 154, 156, 159, 162, 165, 168, 171, 174, 177, 180, 183, 186, 189, 192, 195, 198, 201])*1e-3
-    innerNumMagnets = np.array([50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67, 68])    
+    innerNumMagnets = np.array([50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67, 68])
     outerRingRadii = innerRingRadii + 21*1e-3
     outerNumMagnets = innerNumMagnets + 7
-    
+
     numRings = 23
-    ringSep = .022 
+    ringSep = .022
     magnetLength = (numRings - 1) * ringSep
     ringPositions = np.linspace(-magnetLength/2, magnetLength/2, numRings)   
     ringPositionsPositiveOnly = ringPositions[ringPositions >= 0]    
@@ -32,14 +28,20 @@ def generateExampleGeometry():
         sizeIndex = innerRingRadii.size - positionIndex
         if sizeIndex >= innerRingRadii.size:
             sizeIndex = innerRingRadii.size-1
-        halbachSlice = HalbachSlice(position, innerRingRadii[sizeIndex]-0.020, maxOuterRadius+0.040, 12, maxOuterRadius + 0.025, 0.005, standHeight, standWidth)
-        halbachSlice.addRing(HalbachRing(position, innerRingRadii[sizeIndex], innerNumMagnets[sizeIndex], CubeMagnet), position)
-        halbachSlice.addRing(HalbachRing(position, outerRingRadii[sizeIndex], outerNumMagnets[sizeIndex], CubeMagnet), position)
+        halbachSlice = HalbachSlice(position, innerRingRadii[sizeIndex]-0.020, maxOuterRadius+0.040, 12,
+            maxOuterRadius + 0.025, 0.005, standHeight, standWidth)
+        halbachSlice.addRing(HalbachRing(position, innerRingRadii[sizeIndex], innerNumMagnets[sizeIndex],
+            CubeMagnet), position)
+        halbachSlice.addRing(HalbachRing(position, outerRingRadii[sizeIndex], outerNumMagnets[sizeIndex],
+            CubeMagnet), position)
         halbachCylinder.addSlice(halbachSlice)
         if positionIndex != 0:
-            halbachSlice = HalbachSlice(-position, innerRingRadii[sizeIndex]-0.020, maxOuterRadius+0.040, 12, maxOuterRadius + 0.025, 0.005, standHeight, standWidth)
-            halbachSlice.addRing(HalbachRing(-position, innerRingRadii[sizeIndex], innerNumMagnets[sizeIndex], CubeMagnet), -position)
-            halbachSlice.addRing(HalbachRing(-position, outerRingRadii[sizeIndex], outerNumMagnets[sizeIndex], CubeMagnet), -position)
+            halbachSlice = HalbachSlice(-position, innerRingRadii[sizeIndex]-0.020, maxOuterRadius+0.040,
+                12, maxOuterRadius + 0.025, 0.005, standHeight, standWidth)
+            halbachSlice.addRing(HalbachRing(-position, innerRingRadii[sizeIndex], innerNumMagnets[sizeIndex],
+                CubeMagnet), -position)
+            halbachSlice.addRing(HalbachRing(-position, outerRingRadii[sizeIndex], outerNumMagnets[sizeIndex],
+                CubeMagnet), -position)
             halbachCylinder.addSlice(halbachSlice)
     return halbachCylinder
 
@@ -51,8 +53,8 @@ if __name__ == '__main__':
     parser.add_argument('--fem', action='store_true', help='generate a .geo and .pro file for simulation with GMSH=GetDP')
     parser.add_argument('--scad', action='store_true', help='generate a .scad file')
     parser.add_argument('-o', nargs='?', default='input filename without extension', help='output filename without extension')
-    args = parser.parse_args()     
-    halbachCylinder = HalbachCylinder.HalbachCylinder()
+    args = parser.parse_args()
+    halbachCylinder = HalbachCylinder()
 
     print("loading file...")
     halbachCylinder.loadJSON(args.filename[0])
@@ -95,20 +97,20 @@ if __name__ == '__main__':
         qq = plt.tricontour(evalPointsz0[0], evalPointsz0[1], B_abs, cmap=plt.cm.jet)
         plt.colorbar(qq)
     if args.fem:
-        gmsh.initialize()        
+        gmsh.initialize()
         gmsh.model.add("cylinder")
         meshResolution = 0.024
-        BoundingBoxDiameter = 0.3        
+        BoundingBoxDiameter = 0.3
         DSV = 0.2
         boxDimensions = (BoundingBoxDiameter, BoundingBoxDiameter, BoundingBoxDiameter)
-        gmsh.model.occ.synchronize()    
+        gmsh.model.occ.synchronize()
         gmsh.option.setNumber("Mesh.Optimize",1)
         gmsh.option.setNumber("Geometry.ExactExtrusion",0)
         gmsh.option.setNumber("Solver.AutoMesh",2)
         gmsh.option.setNumber("Geometry.ExactExtrusion",0)
         gmsh.option.setNumber("Mesh.MeshSizeMin", 0.003)
         gmsh.option.setNumber("Mesh.MeshSizeMax", 1)
-        gmsh.option.setNumber("Mesh.MeshSizeFactor", 1)        
+        gmsh.option.setNumber("Mesh.MeshSizeFactor", 1)
         numMagnets = 0
         magnetData = "DefineConstant[\n"
         for numSlice, slice in enumerate(halbachCylinder.slices):
@@ -122,24 +124,24 @@ if __name__ == '__main__':
         magnetData += "NumMagnets = " + str(numMagnets) + "\n"
         magnetData += "SurfaceRegionOffset = 10000\n"
         magnetData += "DSV = " + str(DSV) + "\n"
-        magnetData += "outputFilename = " + "\"ring\"" + "\n"                
+        magnetData += "outputFilename = " + "\"ring\"" + "\n"
         magnetData += "];\n"
 
-        # add bounding box 
-        #airVol, airSL = addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))             
-        airVol = gmsh.model.occ.addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))             
+        # add bounding box
+        #airVol, airSL = addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))
+        airVol = gmsh.model.occ.addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))
         gmsh.model.occ.synchronize()
         airVolBoundary = [x[1] for x in gmsh.model.getBoundary([[3,airVol]], oriented=False)]
         gmsh.model.occ.fragment(gmsh.model.occ.getEntities(3), [])
         gmsh.model.occ.synchronize()
-        physicalTag = gmsh.model.addPhysicalGroup(3, [airVol], numMagnets+1) 
-        physicalTag = gmsh.model.addPhysicalGroup(2, airVolBoundary, numMagnets+2)       
+        physicalTag = gmsh.model.addPhysicalGroup(3, [airVol], numMagnets+1)
+        physicalTag = gmsh.model.addPhysicalGroup(2, airVolBoundary, numMagnets+2)
         gmsh.model.occ.synchronize()
-        gmsh.model.mesh.generate(3)    
+        gmsh.model.mesh.generate(3)
 
         with open(outputFilename + ".pro", "w") as text_file:
             text_file.write(magnetData)       
-            text_file.write("Include \"templates/cylinder_template.pro\"\n")       
+            text_file.write("Include \"templates/cylinder_template.pro\"\n")
         gmsh.write(outputFilename + ".geo_unrolled")
         copyfile(outputFilename + ".geo_unrolled", outputFilename + ".geo") # opening the .pro file in gmsh GUI searches for a .geo file
         os.remove(outputFilename + ".geo_unrolled")
@@ -147,5 +149,5 @@ if __name__ == '__main__':
         gmsh.write(outputFilename + ".geo.opt")
         #gmsh.fltk.run()
         gmsh.finalize()
-    plt.show()    
+    plt.show()
     
