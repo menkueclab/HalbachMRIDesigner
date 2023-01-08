@@ -24,7 +24,7 @@ To frabricate the individual slices by milling or 3d printing, you can import th
 - Import .csg file into FreeCAD
 
 # FEM Simulation
-Install sparselizard from [here](https://github.com/catkira/sparselizard) and spylizard from [here](https://github.com/catkira/sparselizard-users).
+Install sparselizard from [here](https://github.com/catkira/sparselizard/tree/master_next) and spylizard from [here](https://github.com/catkira/sparselizard-users/tree/master_next).
 To create files needed for a FEM simulation, add "--fem" to the command line when executing HalbachMRIDesigner.py. The generated .pro file can then be loaded into ONELAB(https://onelab.info/) for performing the FEM simulation.
 ![Cylinder in Gmsh](https://github.com/menkueclab/HalbachMRIDesigner/blob/master/examples/cylinderNoMesh.png?raw=true)
 ![Cylinder in Gmsh with mesh](https://github.com/menkueclab/HalbachMRIDesigner/blob/master/examples/cylinderMesh.png?raw=true)
