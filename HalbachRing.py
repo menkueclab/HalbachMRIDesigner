@@ -215,23 +215,23 @@ if __name__ == '__main__':
         gmsh.model.mesh.field.setNumber(1, "VOut", meshResolutionDSVMagnet)
         gmsh.model.mesh.field.setAsBackgroundMesh(1)
         gmsh.model.mesh.generate(3)    
-        with open("ring.pro", "w") as text_file:
-            text_file.write(magnetData)         
-            text_file.write("Include \"templates/ring_template.pro\"\n")
+        # with open("ring.pro", "w") as text_file:
+        #     text_file.write(magnetData)         
+        #     text_file.write("Include \"templates/ring_template.pro\"\n")
         dataDict = testRing1.getDict(0)
         dataDict += testRing2.getDict(len(testRing1.magnets))
         settingsDict = {
                 "dataDict" : dataDict,
                 "SurfaceRegionOffset" : 10000
             }       
-        with open("ring.py", "wb") as python_file:
+        with open("ring.pickle", "wb") as python_file:
             pickle.dump(settingsDict, python_file)
         gmsh.write("ring.geo_unrolled")
         copyfile("ring.geo_unrolled", "ring.geo") # opening the .pro file in gmsh GUI searches for a .geo file
         os.remove("ring.geo_unrolled")
         gmsh.write("ring.msh")
         gmsh.write("ring.geo.opt")
-        gmsh.merge("ring.pro")
+        # gmsh.merge("ring.pro")
         #gmsh.onelab.run()
         #gmsh.fltk.run()
         gmsh.finalize()

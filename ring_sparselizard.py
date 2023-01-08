@@ -7,7 +7,7 @@ mymesh = mesh()
 mymesh.load("ring.msh")
 
 settingsDict = []
-with open("ring.py", "rb") as python_file:
+with open("ring.pickle", "rb") as python_file:
     settingsDict = pickle.load(python_file)
 numMagnets = len(settingsDict['dataDict'])
 
