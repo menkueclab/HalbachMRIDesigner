@@ -4,7 +4,7 @@ import matplotlib as plt
 from spylizard import *
 
 mymesh = mesh()
-mymesh.load("ring.msh")
+mymesh.load("mri1.msh")
 
 settingsDict = []
 with open("ring.pickle", "rb") as python_file:

@@ -8,6 +8,7 @@ import argparse
 import gmsh
 from shutil import copyfile
 import os
+import pickle
 
 def generateExampleGeometry():
     innerRingRadii = np.array([148, 151, 154, 156, 159, 162, 165, 168, 171, 174, 177, 180, 183, 186, 189, 192, 195, 198, 201])*1e-3
@@ -99,6 +100,7 @@ if __name__ == '__main__':
     if args.fem:
         gmsh.initialize()
         gmsh.model.add("cylinder")
+        generateONELABfile = False
         meshResolution = 0.024
         BoundingBoxDiameter = 0.3
         DSV = 0.2
@@ -112,20 +114,23 @@ if __name__ == '__main__':
         gmsh.option.setNumber("Mesh.MeshSizeMax", 1)
         gmsh.option.setNumber("Mesh.MeshSizeFactor", 1)
         numMagnets = 0
-        magnetData = "DefineConstant[\n"
+        if generateONELABfile:
+            magnetData = "DefineConstant[\n"
         for numSlice, slice in enumerate(halbachCylinder.slices):
             print("Slice " + str(numSlice))
             for numRing, ring in enumerate(slice.rings):
                 numMagnetsProcessed, magnetAngles = ring.generateGeometry(numMagnets)
                 numMagnets += numMagnetsProcessed
-                magnetData += magnetAngles
+                if generateONELABfile:
+                    magnetData += magnetAngles
                 print("   Ring " + str(numRing))
         gmsh.model.occ.synchronize()
-        magnetData += "NumMagnets = " + str(numMagnets) + "\n"
-        magnetData += "SurfaceRegionOffset = 10000\n"
-        magnetData += "DSV = " + str(DSV) + "\n"
-        magnetData += "outputFilename = " + "\"ring\"" + "\n"
-        magnetData += "];\n"
+        if generateONELABfile:
+            magnetData += "NumMagnets = " + str(numMagnets) + "\n"
+            magnetData += "SurfaceRegionOffset = 10000\n"
+            magnetData += "DSV = " + str(DSV) + "\n"
+            magnetData += "outputFilename = " + "\"ring\"" + "\n"
+            magnetData += "];\n"
 
         # add bounding box
         #airVol, airSL = addBox(*tuple(x*(-1) for x in boxDimensions), *tuple(x*2 for x in boxDimensions))
@@ -139,9 +144,24 @@ if __name__ == '__main__':
         gmsh.model.occ.synchronize()
         gmsh.model.mesh.generate(3)
 
-        with open(outputFilename + ".pro", "w") as text_file:
-            text_file.write(magnetData)       
-            text_file.write("Include \"templates/cylinder_template.pro\"\n")
+        if generateONELABfile:
+            with open(outputFilename + ".pro", "w") as text_file:
+                text_file.write(magnetData)
+                text_file.write("Include \"templates/cylinder_template.pro\"\n")
+
+        dataDict = None
+        for slice in halbachCylinder.slices:
+            for ring in slice.rings:
+                if dataDict is None:
+                    dataDict = ring.getDict(0)
+                else:
+                    dataDict += ring.getDict(len(dataDict))
+        settingsDict = {
+                "dataDict" : dataDict,
+                "SurfaceRegionOffset" : 10000
+            }
+        with open(outputFilename + ".pickle", "wb") as pickleFile:
+            pickle.dump(settingsDict, pickleFile)
         gmsh.write(outputFilename + ".geo_unrolled")
         copyfile(outputFilename + ".geo_unrolled", outputFilename + ".geo") # opening the .pro file in gmsh GUI searches for a .geo file
         os.remove(outputFilename + ".geo_unrolled")
