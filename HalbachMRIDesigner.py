@@ -73,8 +73,8 @@ if __name__ == '__main__':
     z = np.linspace(-simDimensions[2]/2, simDimensions[2]/2, int(simDimensions[2]/resolution)+1, dtype=np.float32)
     grid = np.meshgrid(x,y,z)
     mask = np.zeros(np.shape(grid[0]))
-    mask[np.square(grid[0]) + np.square(grid[1]) + np.square(grid[2]) <= (dsv/2)**2] = 1   
-    evalPoints = [g[mask==1] for g in grid]    
+    mask[np.square(grid[0]) + np.square(grid[1]) + np.square(grid[2]) <= (dsv/2)**2] = 1
+    evalPoints = [g[mask==1] for g in grid]
     B0 = halbachCylinder.calculateB(evalPoints)
     print("Max B0 amplitude is " + str(np.amax(B0)) + " T")
     B0z0 = B0[evalPoints[2]==0,:]
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
     if args.scad:
         print("writing " + outputFilename + ".scad")
-        halbachCylinder.generateSCADFile(outputFilename + ".scad")        
+        halbachCylinder.generateSCADFile(outputFilename + ".scad")
     if args.quiver:
         fig = plt.figure(figsize=(16,12))
         qq = plt.quiver(evalPointsz0[0], evalPointsz0[1], B0z0[:,0], B0z0[:,1], B_abs, cmap=plt.cm.jet)
@@ -106,13 +106,14 @@ if __name__ == '__main__':
         DSV = 0.2
         boxDimensions = (BoundingBoxDiameter, BoundingBoxDiameter, BoundingBoxDiameter)
         gmsh.model.occ.synchronize()
-        gmsh.option.setNumber("Mesh.Optimize",1)
-        gmsh.option.setNumber("Geometry.ExactExtrusion",0)
-        gmsh.option.setNumber("Solver.AutoMesh",2)
-        gmsh.option.setNumber("Geometry.ExactExtrusion",0)
+        gmsh.option.setNumber("Mesh.Optimize", 1)
+        gmsh.option.setNumber("Geometry.ExactExtrusion", 0)
+        gmsh.option.setNumber("Solver.AutoMesh", 2)
+        gmsh.option.setNumber("Geometry.ExactExtrusion", 0)
         gmsh.option.setNumber("Mesh.MeshSizeMin", 0.003)
         gmsh.option.setNumber("Mesh.MeshSizeMax", 1)
         gmsh.option.setNumber("Mesh.MeshSizeFactor", 1)
+        gmsh.option.setNumber("Mesh.MshFileVersion", 2)  # for sparselizard
         numMagnets = 0
         if generateONELABfile:
             magnetData = "DefineConstant[\n"
@@ -162,8 +163,18 @@ if __name__ == '__main__':
             }
         with open(outputFilename + ".pickle", "wb") as pickleFile:
             pickle.dump(settingsDict, pickleFile)
+
+        #copyfile("templates/sparselizard_template.py", outputFilename + ".py")
+        with open("templates/sparselizard_template.py", "r") as pythonTemplateFile:
+            pythonTemplate = pythonTemplateFile.read()
+        pythonTemplate = pythonTemplate.replace("__PROJECTNAME__", outputFilename)
+        with open(outputFilename + ".py", "w") as outputFile:
+            outputFile.write(pythonTemplate)
+
+
         gmsh.write(outputFilename + ".geo_unrolled")
-        copyfile(outputFilename + ".geo_unrolled", outputFilename + ".geo") # opening the .pro file in gmsh GUI searches for a .geo file
+        # opening the .pro file in gmsh GUI searches for a .geo file
+        copyfile(outputFilename + ".geo_unrolled", outputFilename + ".geo")
         os.remove(outputFilename + ".geo_unrolled")
         gmsh.write(outputFilename + ".msh")
         gmsh.write(outputFilename + ".geo.opt")

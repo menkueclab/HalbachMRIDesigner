@@ -45,7 +45,8 @@ def addBox(x, y, z, dx, dy, dz, meshSize = 0):
 
 class HalbachRing:
     # all units are SI units
-    def __init__(self, position, radius, numMagnets, magnetType):
+    def __init__(self, ringId, position, radius, numMagnets, magnetType):
+        self.ringId = ringId
         self.radius = radius
         self.numMagnets = numMagnets
         self.position = position

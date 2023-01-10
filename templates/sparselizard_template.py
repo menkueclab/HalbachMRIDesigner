@@ -3,11 +3,13 @@ import numpy as np
 import matplotlib as plt
 from spylizard import *
 
+projectName = "__PROJECTNAME__"
+
 mymesh = mesh()
-mymesh.load("mri1.msh")
+mymesh.load(projectName + ".msh")
 
 settingsDict = []
-with open("ring.pickle", "rb") as python_file:
+with open(projectName + ".pickle", "rb") as python_file:
     settingsDict = pickle.load(python_file)
 numMagnets = len(settingsDict['dataDict'])
 
@@ -51,8 +53,8 @@ sol = solve(magnetostatics.A(), magnetostatics.b())
 phi.setdata(wholedomain, sol)
 h = (-grad(phi))
 b = mu*h - br
-h.write(wholedomain, "ring_sparselizard_h.pos", 1)
-b.write(wholedomain, "ring_sparselizard_b.pos", 1)
+h.write(wholedomain, projectName + "_sparselizard_h.pos", 1)
+b.write(wholedomain, projectName + "_sparselizard_b.pos", 1)
 
 # generate dsv sphere
 resolution = 0.005
@@ -71,7 +73,7 @@ interpolated = []
 isFound = []
 b.interpolate(wholedomain, list(np.array(evalPoints).reshape(len(evalPoints[0])*3, order='F')), interpolated, isFound)
 interp3 = np.array(interpolated).reshape(3,len(evalPoints[0]), order='F')
-scatterwrite("interpolated_b_sphere.pos", evalPoints[0], evalPoints[1], evalPoints[2], interp3[0], interp3[1], interp3[2])
+scatterwrite(projectName + "_interpolated_b_sphere.pos", evalPoints[0], evalPoints[1], evalPoints[2], interp3[0], interp3[1], interp3[2])
 
 # slice at z=0
 x = np.linspace(-simDimensions[0]/2, simDimensions[0]/2, int(simDimensions[0]/resolution)+1, dtype=np.float32)
@@ -79,16 +81,16 @@ y = np.linspace(-simDimensions[1]/2, simDimensions[1]/2, int(simDimensions[1]/re
 z = [0]
 grid = np.meshgrid(x,y,z)
 mask = np.zeros(np.shape(grid[0]))
-mask[np.square(grid[0]) + np.square(grid[1]) <= (dsv/2)**2] = 1   
+mask[np.square(grid[0]) + np.square(grid[1]) <= (dsv/2)**2] = 1
 evalPoints = [g[mask==1] for g in grid]    
 interpolated = []
 isFound = []
 b.interpolate(wholedomain, list(np.array(evalPoints).reshape(len(evalPoints[0])*3, order='F')), interpolated, isFound)
 interp3 = np.array(interpolated).reshape(3,len(evalPoints[0]), order='F')
-scatterwrite("interpolated_b_z0.pos", evalPoints[0], evalPoints[1], evalPoints[2], interp3[0], interp3[1], interp3[2])
+scatterwrite(projectName + "_interpolated_b_z0.pos", evalPoints[0], evalPoints[1], evalPoints[2], interp3[0], interp3[1], interp3[2])
 interpolated = []
 isFound = []
 h.interpolate(wholedomain, list(np.array(evalPoints).reshape(len(evalPoints[0])*3, order='F')), interpolated, isFound)
 interp3 = np.array(interpolated).reshape(3,len(evalPoints[0]), order='F')
-scatterwrite("interpolated_h_z0.pos", evalPoints[0], evalPoints[1], evalPoints[2], interp3[0], interp3[1], interp3[2])
+scatterwrite(projectName + "_interpolated_h_z0.pos", evalPoints[0], evalPoints[1], evalPoints[2], interp3[0], interp3[1], interp3[2])
 
